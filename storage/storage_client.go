@@ -9,6 +9,7 @@ import (
 type StorageClient interface {
 	Download(filePath string) error
 	Upload(filePath string) error
+	Version() (concourse.Version, error)
 }
 
 func NewStorageClient(source concourse.Source) (StorageClient, error) {

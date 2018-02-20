@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/cloudfoundry/bbl-state-resource/concourse"
 )
 
 var ObjectNotFoundError = errors.New("Object not found")
@@ -12,6 +14,7 @@ var ObjectNotFoundError = errors.New("Object not found")
 type object interface {
 	NewReader() (io.ReadCloser, error)
 	NewWriter() io.WriteCloser
+	Version() (string, error)
 }
 
 type tarrer interface {
@@ -22,6 +25,14 @@ type tarrer interface {
 type Storage struct {
 	Object   object
 	Archiver tarrer
+}
+
+func (s Storage) Version() (concourse.Version, error) {
+	version, err := s.Object.Version()
+	if err != nil {
+		return concourse.Version{}, err
+	}
+	return concourse.Version{Ref: version}, nil
 }
 
 func (s Storage) Download(targetDir string) error {

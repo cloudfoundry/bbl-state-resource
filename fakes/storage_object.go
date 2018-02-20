@@ -1,8 +1,17 @@
 package fakes
 
-import "io"
+import (
+	"io"
+)
 
-type GCSBucketObject struct {
+type Object struct {
+	VersionCall struct {
+		Returns struct {
+			Version string
+			Error   error
+		}
+	}
+
 	NewReaderCall struct {
 		CallCount int
 		Returns   struct {
@@ -19,12 +28,16 @@ type GCSBucketObject struct {
 	}
 }
 
-func (g *GCSBucketObject) NewReader() (io.ReadCloser, error) {
+func (g *Object) Version() (string, error) {
+	return g.VersionCall.Returns.Version, g.VersionCall.Returns.Error
+}
+
+func (g *Object) NewReader() (io.ReadCloser, error) {
 	g.NewReaderCall.CallCount++
 	return g.NewReaderCall.Returns.ReadCloser, g.NewReaderCall.Returns.Error
 }
 
-func (g *GCSBucketObject) NewWriter() io.WriteCloser {
+func (g *Object) NewWriter() io.WriteCloser {
 	g.NewWriterCall.CallCount++
 	return g.NewWriterCall.Returns.WriteCloser
 }

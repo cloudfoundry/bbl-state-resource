@@ -18,22 +18,25 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var _ = Describe("in", func() {
+var _ = Describe("check", func() {
 	var (
-		targetDir        string
-		bblStateContents string
-		in               *bytes.Buffer
+		targetDir         string
+		bblStateContents  string
+		serviceAccountKey string
+		check             *bytes.Buffer
+		version           concourse.Version
 	)
 
 	BeforeEach(func() {
 		Expect(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY")).NotTo(Equal(""))
 
-		serviceAccountKey, err := readGCPServiceAccountKey(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY"))
+		var err error
+		serviceAccountKey, err = readGCPServiceAccountKey(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY"))
 		Expect(err).NotTo(HaveOccurred())
 
-		inRequest := fmt.Sprintf(`{
+		checkRequest := fmt.Sprintf(`{
 			"source": {
-				"name": "in-test-test-env",
+				"name": "check-test-test-env",
 				"iaas": "gcp",
 				"gcp_region": "us-east1",
 				"gcp_service_account_key": %s
@@ -42,7 +45,7 @@ var _ = Describe("in", func() {
 		}`, strconv.Quote(serviceAccountKey))
 
 		var req concourse.InRequest
-		err = json.Unmarshal([]byte(inRequest), &req)
+		err = json.Unmarshal([]byte(checkRequest), &req)
 		Expect(err).NotTo(HaveOccurred())
 		// this client isn't well tested, so we're going
 		// to violate some abstraction layers to test it here
@@ -59,34 +62,59 @@ var _ = Describe("in", func() {
 			Expect(err).NotTo(HaveOccurred())
 			defer f.Close()
 
-			bblStateContents = fmt.Sprintf(`{"version": 14, "randomDir": "%s"}`, uploadDir)
+			bblStateContents = fmt.Sprintf(`{"randomDir": "%s"}`, uploadDir)
 			_, err = f.Write([]byte(bblStateContents))
 			Expect(err).NotTo(HaveOccurred())
 
 			err = client.Upload(uploadDir)
 			Expect(err).NotTo(HaveOccurred())
+
+			version, err = client.Version()
+			Expect(err).NotTo(HaveOccurred())
 		})
 
-		targetDir, err = ioutil.TempDir("", "in_test")
+		targetDir, err = ioutil.TempDir("", "check_test")
 		Expect(err).NotTo(HaveOccurred())
 
-		in = bytes.NewBuffer([]byte(inRequest))
+		check = bytes.NewBuffer([]byte(checkRequest))
 	})
 
 	AfterEach(func() {
 		os.RemoveAll(targetDir) // ignore the error
 	})
 
-	It("downloads the latest specified version of the resource", func() {
-		cmd := exec.Command(inBinaryPath, targetDir)
-		cmd.Stdin = in
+	It("prints the latest version of the resource", func() {
+		cmd := exec.Command(checkBinaryPath, targetDir)
+		cmd.Stdin = check
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(session, 10).Should(gexec.Exit(0))
-		Eventually(session.Out).Should(gbytes.Say(`{"ref":"the-greatest"}`))
-		f, err := os.Open(filepath.Join(targetDir, "bbl-state.json"))
-		Expect(err).NotTo(HaveOccurred())
-		Eventually(gbytes.BufferReader(f)).Should(gbytes.Say(bblStateContents))
+		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`[{"ref":"%s"}]`, version.Ref)))
+	})
+
+	Context("when there is nothing stored in gcp", func() {
+		BeforeEach(func() {
+			checkRequest := fmt.Sprintf(`{
+				"source": {
+					"name": "empty-bucket-check-test",
+					"iaas": "gcp",
+					"gcp_region": "us-east1",
+					"gcp_service_account_key": %s
+				},
+				"version": {"ref": "the-greatest"}
+			}`, strconv.Quote(serviceAccountKey))
+			check = bytes.NewBuffer([]byte(checkRequest))
+		})
+
+		It("prints an empty json list", func() {
+			cmd := exec.Command(checkBinaryPath, targetDir)
+			cmd.Stdin = check
+
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, 10).Should(gexec.Exit(0))
+			Expect(string(session.Out.Contents())).To(Equal(`[]`))
+		})
 	})
 })
 

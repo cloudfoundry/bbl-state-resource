@@ -39,4 +39,4 @@ resources:
 
 things happen via the Makefile:
 
-make push
+make help

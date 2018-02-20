@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,6 +16,17 @@ import (
 // untested gcs api instantiation
 type objectHandleWrapper struct {
 	objectHandle *gcs.ObjectHandle
+}
+
+func (o objectHandleWrapper) Version() (string, error) {
+	r, err := o.objectHandle.Attrs(context.Background())
+	if err == gcs.ErrObjectNotExist {
+		return "", ObjectNotFoundError
+	} else if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(r.MD5), nil
 }
 
 func (o objectHandleWrapper) NewReader() (io.ReadCloser, error) {

@@ -1,5 +1,5 @@
 package concourse
 
 type Version struct {
-	Generation string `json:"generation"`
+	Ref string `json:"ref"`
 }

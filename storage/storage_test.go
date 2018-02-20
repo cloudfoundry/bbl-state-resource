@@ -15,13 +15,13 @@ import (
 
 var _ = Describe("Storage", func() {
 	var (
-		storageDir          string
-		filename            string
-		store               storage.Storage
-		fakeTarrer          *fakes.Tarrer
-		fakeGCSBucketObject *fakes.GCSBucketObject
-		fakeReadCloser      *fakes.ReadCloser
-		fakeWriteCloser     *fakes.WriteCloser
+		storageDir      string
+		filename        string
+		store           storage.Storage
+		fakeTarrer      *fakes.Tarrer
+		fakeObject      *fakes.Object
+		fakeReadCloser  *fakes.ReadCloser
+		fakeWriteCloser *fakes.WriteCloser
 	)
 
 	BeforeEach(func() {
@@ -30,9 +30,10 @@ var _ = Describe("Storage", func() {
 		fakeReadCloser = &fakes.ReadCloser{}
 		fakeWriteCloser = &fakes.WriteCloser{}
 
-		fakeGCSBucketObject = &fakes.GCSBucketObject{}
-		fakeGCSBucketObject.NewReaderCall.Returns.ReadCloser = fakeReadCloser
-		fakeGCSBucketObject.NewWriterCall.Returns.WriteCloser = fakeWriteCloser
+		fakeObject = &fakes.Object{}
+		fakeObject.NewReaderCall.Returns.ReadCloser = fakeReadCloser
+		fakeObject.NewWriterCall.Returns.WriteCloser = fakeWriteCloser
+		fakeObject.VersionCall.Returns.Version = "fresh-version"
 
 		By("creating a temporary directory to walk", func() {
 			var err error
@@ -49,7 +50,7 @@ var _ = Describe("Storage", func() {
 		})
 
 		store = storage.Storage{
-			Object:   fakeGCSBucketObject,
+			Object:   fakeObject,
 			Archiver: fakeTarrer,
 		}
 	})
@@ -113,7 +114,7 @@ var _ = Describe("Storage", func() {
 
 		Context("when the object does not exist", func() {
 			BeforeEach(func() {
-				fakeGCSBucketObject.NewReaderCall.Returns.Error = storage.ObjectNotFoundError
+				fakeObject.NewReaderCall.Returns.Error = storage.ObjectNotFoundError
 			})
 
 			It("uploads the object", func() {
@@ -132,7 +133,7 @@ var _ = Describe("Storage", func() {
 
 		Context("when reading the object returns an error", func() {
 			BeforeEach(func() {
-				fakeGCSBucketObject.NewReaderCall.Returns.Error = errors.New("papaya")
+				fakeObject.NewReaderCall.Returns.Error = errors.New("papaya")
 			})
 
 			It("returns the error", func() {
@@ -149,7 +150,7 @@ var _ = Describe("Storage", func() {
 
 		Context("when reading the object returns an error", func() {
 			BeforeEach(func() {
-				fakeGCSBucketObject.NewReaderCall.Returns.Error = errors.New("papaya")
+				fakeObject.NewReaderCall.Returns.Error = errors.New("papaya")
 			})
 
 			It("returns the error", func() {
@@ -177,6 +178,25 @@ var _ = Describe("Storage", func() {
 
 				Expect(fakeReadCloser.CloseCall.CallCount).To(Equal(1))
 				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(0))
+			})
+		})
+	})
+
+	Describe("Version", func() {
+		It("returns the objects version", func() {
+			version, err := store.Version()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(version.Ref).To(Equal("fresh-version"))
+		})
+
+		Context("when the underlying object errors", func() {
+			BeforeEach(func() {
+				fakeObject.VersionCall.Returns.Error = errors.New("mango")
+			})
+
+			It("returns the error", func() {
+				_, err := store.Version()
+				Expect(err).To(MatchError("mango"))
 			})
 		})
 	})
