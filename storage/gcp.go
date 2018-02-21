@@ -72,6 +72,7 @@ func NewGCSStorage(serviceAccountKey string, bucketName string) (Storage, error)
 	object := bucket.Object("bbl-state.tar.gz")
 
 	return Storage{
+		DirectoryName: bucketName,
 		Object: objectHandleWrapper{
 			objectHandle: object,
 		},

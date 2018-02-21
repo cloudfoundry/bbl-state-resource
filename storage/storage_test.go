@@ -50,13 +50,14 @@ var _ = Describe("Storage", func() {
 		})
 
 		store = storage.Storage{
-			Object:   fakeObject,
-			Archiver: fakeTarrer,
+			DirectoryName: "dir-inside-tarball",
+			Object:        fakeObject,
+			Archiver:      fakeTarrer,
 		}
 	})
 
 	AfterEach(func() {
-		_ = os.RemoveAll(storageDir) // ignore the error
+		// _ = os.RemoveAll(storageDir) // ignore the error
 	})
 
 	Describe("Upload", func() {
@@ -65,7 +66,8 @@ var _ = Describe("Storage", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeTarrer.WriteCall.Receives.Output).To(Equal(fakeWriteCloser))
-			Expect(fakeTarrer.WriteCall.Receives.Sources).To(ConsistOf(filename))
+			Expect(fakeTarrer.WriteCall.Receives.Sources).To(HaveLen(1))
+			Expect(filepath.Base(fakeTarrer.WriteCall.Receives.Sources[0])).To(Equal("dir-inside-tarball"))
 
 			Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(1))
 		})
@@ -97,7 +99,7 @@ var _ = Describe("Storage", func() {
 
 	Describe("Download", func() {
 		Context("when the object already exists", func() {
-			It("downloads the object, tars it, and re-uploads it", func() {
+			FIt("downloads the object, tars it, and re-uploads it", func() {
 				err := store.Download(storageDir)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -105,7 +107,9 @@ var _ = Describe("Storage", func() {
 				Expect(fakeTarrer.ReadCall.Receives.Destination).To(Equal(storageDir))
 
 				Expect(fakeTarrer.WriteCall.Receives.Output).To(Equal(fakeWriteCloser))
-				Expect(fakeTarrer.WriteCall.Receives.Sources).To(ConsistOf(filename))
+				Expect(fakeTarrer.WriteCall.Receives.Sources).To(HaveLen(1))
+				Expect(filepath.Base(fakeTarrer.WriteCall.Receives.Sources[0])).To(Equal("bbl-state.json"))
+				Expect(fakeTarrer.WriteCall.Receives.Sources[0]).NotTo(ContainSubstring("dir-inside-tarball"))
 
 				Expect(fakeReadCloser.CloseCall.CallCount).To(Equal(1))
 				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(1))
@@ -124,7 +128,9 @@ var _ = Describe("Storage", func() {
 				Expect(fakeTarrer.ReadCall.CallCount).To(Equal(0))
 
 				Expect(fakeTarrer.WriteCall.Receives.Output).To(Equal(fakeWriteCloser))
-				Expect(fakeTarrer.WriteCall.Receives.Sources).To(ConsistOf(filename))
+				Expect(fakeTarrer.WriteCall.Receives.Sources).To(HaveLen(1))
+				Expect(filepath.Base(fakeTarrer.WriteCall.Receives.Sources[0])).To(Equal("bbl-state.json"))
+				Expect(fakeTarrer.WriteCall.Receives.Sources[0]).NotTo(ContainSubstring("dir-inside-tarball"))
 
 				Expect(fakeReadCloser.CloseCall.CallCount).To(Equal(0))
 				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(1))
@@ -198,6 +204,50 @@ var _ = Describe("Storage", func() {
 				_, err := store.Version()
 				Expect(err).To(MatchError("mango"))
 			})
+		})
+	})
+
+	Describe("CopyDir", func() {
+		var (
+			source string
+			dest   string
+		)
+		BeforeEach(func() {
+			var err error
+			source, err = ioutil.TempDir("", "")
+			Expect(err).NotTo(HaveOccurred())
+
+			err = os.Mkdir(filepath.Join(source, "subdirectory"), os.ModePerm)
+
+			dest = filepath.Join(os.TempDir(), "bbl-concourse-resource-copy-dir-dest")
+
+			filePath := filepath.Join(source, "some-file")
+			err = ioutil.WriteFile(filePath, []byte("some-contents"), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			nestedFilePath := filepath.Join(source, "subdirectory", "some-other-file")
+			err = ioutil.WriteFile(nestedFilePath, []byte("some-more-contents"), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		AfterEach(func() {
+			os.RemoveAll(source)
+			os.RemoveAll(dest)
+		})
+
+		It("copies the contents of sourcePath to destPath", func() {
+			err := storage.CopyDir(source, dest)
+			Expect(err).NotTo(HaveOccurred())
+
+			filePath := filepath.Join(dest, "some-file")
+			contents, err := ioutil.ReadFile(filePath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(contents)).To(Equal("some-contents"))
+
+			nestedFilePath := filepath.Join(dest, "subdirectory", "some-other-file")
+			contents, err = ioutil.ReadFile(nestedFilePath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(contents)).To(Equal("some-more-contents"))
 		})
 	})
 })

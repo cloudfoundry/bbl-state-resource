@@ -74,7 +74,7 @@ var _ = Describe("in", func() {
 	})
 
 	AfterEach(func() {
-		os.RemoveAll(targetDir) // ignore the error
+		// os.RemoveAll(targetDir) // ignore the error
 	})
 
 	It("downloads the latest specified version of the resource", func() {

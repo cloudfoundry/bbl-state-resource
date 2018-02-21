@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -23,8 +24,9 @@ type tarrer interface {
 }
 
 type Storage struct {
-	Object   object
-	Archiver tarrer
+	DirectoryName string
+	Object        object
+	Archiver      tarrer
 }
 
 func (s Storage) Version() (concourse.Version, error) {
@@ -45,12 +47,15 @@ func (s Storage) Download(targetDir string) error {
 	}
 	defer reader.Close() // what happens if this errors?
 
-	err = os.MkdirAll(targetDir, 777)
+	tmpDir, err := ioutil.TempDir("", "")
+	// defer os.Remove(tmpDir)
+
+	err = s.Archiver.Read(reader, tmpDir)
 	if err != nil {
 		return err
 	}
 
-	err = s.Archiver.Read(reader, targetDir)
+	err = os.Rename(filepath.Join(tmpDir, s.DirectoryName), targetDir)
 	if err != nil {
 		return err
 	}
@@ -60,22 +65,46 @@ func (s Storage) Download(targetDir string) error {
 
 func (s Storage) Upload(filePath string) error {
 	writer := s.Object.NewWriter()
-	paths := []string{}
-	err := filepath.Walk(filePath, func(path string, f os.FileInfo, err error) error {
-		if filePath == path {
-			return nil
-		}
-		paths = append(paths, path)
-		return err
-	})
+
+	tempDir := filepath.Join(os.TempDir(), s.DirectoryName)
+	defer os.RemoveAll(tempDir)
+
+	err := CopyDir(filePath, tempDir)
 	if err != nil {
 		return err
 	}
 
-	err = s.Archiver.Write(writer, paths)
+	err = s.Archiver.Write(writer, []string{tempDir})
 	if err != nil {
 		return err
 	}
 
 	return writer.Close()
+}
+
+func CopyDir(sourcePath, destPath string) error {
+	return filepath.Walk(sourcePath, func(path string, f os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if sourcePath == path {
+			return os.MkdirAll(destPath, f.Mode())
+		}
+
+		if f.IsDir() {
+			return os.MkdirAll(filepath.Join(destPath, f.Name()), f.Mode())
+		}
+
+		contents, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		subpath, err := filepath.Rel(sourcePath, path)
+		if err != nil {
+			return err
+		}
+		return ioutil.WriteFile(filepath.Join(destPath, subpath), contents, f.Mode())
+	})
 }
