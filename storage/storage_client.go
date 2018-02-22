@@ -7,8 +7,8 @@ import (
 )
 
 type StorageClient interface {
-	Download(filePath string) error
-	Upload(filePath string) error
+	Download(filePath string) (concourse.Version, error)
+	Upload(filePath string) (concourse.Version, error)
 	Version() (concourse.Version, error)
 }
 

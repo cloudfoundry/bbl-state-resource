@@ -38,8 +38,8 @@ var _ = Describe("check", func() {
 			"source": {
 				"name": "check-test-test-env",
 				"iaas": "gcp",
-				"gcp_region": "us-east1",
-				"gcp_service_account_key": %s
+				"gcp-region": "us-east1",
+				"gcp-service-account-key": %s
 			},
 			"version": {"ref": "the-greatest"}
 		}`, strconv.Quote(serviceAccountKey))
@@ -66,10 +66,7 @@ var _ = Describe("check", func() {
 			_, err = f.Write([]byte(bblStateContents))
 			Expect(err).NotTo(HaveOccurred())
 
-			err = client.Upload(uploadDir)
-			Expect(err).NotTo(HaveOccurred())
-
-			version, err = client.Version()
+			version, err = client.Upload(uploadDir)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -98,8 +95,8 @@ var _ = Describe("check", func() {
 				"source": {
 					"name": "empty-bucket-check-test",
 					"iaas": "gcp",
-					"gcp_region": "us-east1",
-					"gcp_service_account_key": %s
+					"gcp-region": "us-east1",
+					"gcp-service-account-key": %s
 				},
 				"version": {"ref": "the-greatest"}
 			}`, strconv.Quote(serviceAccountKey))

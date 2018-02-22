@@ -35,30 +35,30 @@ func (s Storage) Version() (concourse.Version, error) {
 	return concourse.Version{Ref: version}, nil
 }
 
-func (s Storage) Download(targetDir string) error {
+func (s Storage) Download(targetDir string) (concourse.Version, error) {
 	reader, err := s.Object.NewReader()
 	if err != nil {
 		if err == ObjectNotFoundError {
 			return s.Upload(targetDir)
 		}
-		return err
+		return concourse.Version{}, err
 	}
 	defer reader.Close() // what happens if this errors?
 
 	err = os.MkdirAll(targetDir, 777)
 	if err != nil {
-		return err
+		return concourse.Version{}, err
 	}
 
 	err = s.Archiver.Read(reader, targetDir)
 	if err != nil {
-		return err
+		return concourse.Version{}, err
 	}
 
 	return s.Upload(targetDir)
 }
 
-func (s Storage) Upload(filePath string) error {
+func (s Storage) Upload(filePath string) (concourse.Version, error) {
 	writer := s.Object.NewWriter()
 	paths := []string{}
 	err := filepath.Walk(filePath, func(path string, f os.FileInfo, err error) error {
@@ -69,13 +69,22 @@ func (s Storage) Upload(filePath string) error {
 		return err
 	})
 	if err != nil {
-		return err
+		return concourse.Version{}, err
 	}
 
 	err = s.Archiver.Write(writer, paths)
 	if err != nil {
-		return err
+		return concourse.Version{}, err
 	}
 
-	return writer.Close()
+	err = writer.Close()
+	if err != nil {
+		return concourse.Version{}, err
+	}
+
+	version, err := s.Object.Version()
+	if err != nil {
+		return concourse.Version{}, err
+	}
+	return concourse.Version{Ref: version}, nil
 }

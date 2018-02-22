@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
+	"github.com/cloudfoundry/bbl-state-resource/outrunner"
 	"github.com/cloudfoundry/bbl-state-resource/storage"
 )
 
@@ -18,6 +20,7 @@ func main() {
 		)
 		os.Exit(1)
 	}
+	stateDir := os.Args[1]
 
 	stdin, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
@@ -25,19 +28,34 @@ func main() {
 		os.Exit(1)
 	}
 
-	inRequest, err := concourse.NewInRequest(stdin)
+	outRequest, err := concourse.NewOutRequest(stdin)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err)
 		os.Exit(1)
 	}
 
-	storageClient, err := storage.NewStorageClient(inRequest.Source)
+	storageClient, err := storage.NewStorageClient(outRequest.Source)
 	if err != nil {
 		log.Fatalf("failed to create storage client: %s", err.Error())
 	}
 
-	err = storageClient.Upload(os.Args[1])
+	_, err = storageClient.Download(stateDir)
+	if err != nil {
+		log.Fatalf("failed to download bbl state: %s", err.Error())
+	}
+
+	err = outrunner.RunBBL(outRequest, stateDir)
+	if err != nil {
+		log.Fatalf("failed to run bbl command: %s", err.Error())
+	}
+
+	version, err := storageClient.Upload(stateDir)
 	if err != nil {
 		log.Fatalf("failed to upload bbl state: %s", err.Error())
+	}
+
+	err = json.NewEncoder(os.Stdout).Encode(version)
+	if err != nil {
+		log.Fatalf("failed to marshal version: %s", err.Error())
 	}
 }

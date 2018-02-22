@@ -21,8 +21,9 @@ import (
 var _ = Describe("in", func() {
 	var (
 		targetDir        string
+		version          concourse.Version
 		bblStateContents string
-		in               *bytes.Buffer
+		inInput          *bytes.Buffer
 	)
 
 	BeforeEach(func() {
@@ -35,8 +36,8 @@ var _ = Describe("in", func() {
 			"source": {
 				"name": "in-test-test-env",
 				"iaas": "gcp",
-				"gcp_region": "us-east1",
-				"gcp_service_account_key": %s
+				"gcp-region": "us-east1",
+				"gcp-service-account-key": %s
 			},
 			"version": {"ref": "the-greatest"}
 		}`, strconv.Quote(serviceAccountKey))
@@ -63,14 +64,14 @@ var _ = Describe("in", func() {
 			_, err = f.Write([]byte(bblStateContents))
 			Expect(err).NotTo(HaveOccurred())
 
-			err = client.Upload(uploadDir)
+			version, err = client.Upload(uploadDir)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		targetDir, err = ioutil.TempDir("", "in_test")
 		Expect(err).NotTo(HaveOccurred())
 
-		in = bytes.NewBuffer([]byte(inRequest))
+		inInput = bytes.NewBuffer([]byte(inRequest))
 	})
 
 	AfterEach(func() {
@@ -79,11 +80,11 @@ var _ = Describe("in", func() {
 
 	It("downloads the latest specified version of the resource", func() {
 		cmd := exec.Command(inBinaryPath, targetDir)
-		cmd.Stdin = in
+		cmd.Stdin = inInput
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(session, 10).Should(gexec.Exit(0))
-		Eventually(session.Out).Should(gbytes.Say(`{"ref":"the-greatest"}`))
+		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`[{"ref":"%s"}]`, version.Ref)))
 		f, err := os.Open(filepath.Join(targetDir, "bbl-state.json"))
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(gbytes.BufferReader(f)).Should(gbytes.Say(bblStateContents))

@@ -61,8 +61,9 @@ var _ = Describe("Storage", func() {
 
 	Describe("Upload", func() {
 		It("tars the contents of filepath and uploads them", func() {
-			err := store.Upload(storageDir)
+			version, err := store.Upload(storageDir)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(version.Ref).To(Equal("fresh-version"))
 
 			Expect(fakeTarrer.WriteCall.Receives.Output).To(Equal(fakeWriteCloser))
 			Expect(fakeTarrer.WriteCall.Receives.Sources).To(ConsistOf(filename))
@@ -76,7 +77,7 @@ var _ = Describe("Storage", func() {
 			})
 
 			It("returns an error", func() {
-				err := store.Upload(storageDir)
+				_, err := store.Upload(storageDir)
 				Expect(err).To(MatchError("coconut"))
 
 				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(0))
@@ -89,7 +90,7 @@ var _ = Describe("Storage", func() {
 			})
 
 			It("returns an error", func() {
-				err := store.Upload(storageDir)
+				_, err := store.Upload(storageDir)
 				Expect(err).To(MatchError("mango"))
 			})
 		})
@@ -98,8 +99,9 @@ var _ = Describe("Storage", func() {
 	Describe("Download", func() {
 		Context("when the object already exists", func() {
 			It("downloads the object, tars it, and re-uploads it", func() {
-				err := store.Download(storageDir)
+				version, err := store.Download(storageDir)
 				Expect(err).NotTo(HaveOccurred())
+				Expect(version.Ref).To(Equal("fresh-version"))
 
 				Expect(fakeTarrer.ReadCall.Receives.Input).To(Equal(fakeReadCloser))
 				Expect(fakeTarrer.ReadCall.Receives.Destination).To(Equal(storageDir))
@@ -117,9 +119,10 @@ var _ = Describe("Storage", func() {
 				fakeObject.NewReaderCall.Returns.Error = storage.ObjectNotFoundError
 			})
 
-			It("uploads the object", func() {
-				err := store.Download(storageDir)
+			It("uploads an empty object", func() {
+				version, err := store.Download(storageDir)
 				Expect(err).NotTo(HaveOccurred())
+				Expect(version.Ref).To(Equal("fresh-version"))
 
 				Expect(fakeTarrer.ReadCall.CallCount).To(Equal(0))
 
@@ -137,7 +140,7 @@ var _ = Describe("Storage", func() {
 			})
 
 			It("returns the error", func() {
-				err := store.Download(storageDir)
+				_, err := store.Download(storageDir)
 				Expect(err).To(MatchError("papaya"))
 
 				Expect(fakeTarrer.ReadCall.CallCount).To(Equal(0))
@@ -154,7 +157,7 @@ var _ = Describe("Storage", func() {
 			})
 
 			It("returns the error", func() {
-				err := store.Download(storageDir)
+				_, err := store.Download(storageDir)
 				Expect(err).To(MatchError("papaya"))
 
 				Expect(fakeTarrer.ReadCall.CallCount).To(Equal(0))
@@ -171,13 +174,24 @@ var _ = Describe("Storage", func() {
 			})
 
 			It("returns the error", func() {
-				err := store.Download(storageDir)
+				_, err := store.Download(storageDir)
 				Expect(err).To(MatchError("mango"))
 
 				Expect(fakeTarrer.WriteCall.CallCount).To(Equal(0))
 
 				Expect(fakeReadCloser.CloseCall.CallCount).To(Equal(1))
 				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(0))
+			})
+		})
+
+		Context("when the fetching the version of the object errors", func() {
+			BeforeEach(func() {
+				fakeObject.VersionCall.Returns.Error = errors.New("mango")
+			})
+
+			It("returns the error", func() {
+				_, err := store.Download(storageDir)
+				Expect(err).To(MatchError("mango"))
 			})
 		})
 	})

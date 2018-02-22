@@ -8,7 +8,8 @@ a wippity concourse resource for manipulating bbl-states
 ### `in`: Download information about a BOSH director and its associated iaas environment
 
 This will download the gcp-stored bbl-state dir to the target directory,
-additionally formatting target-dir/bdr-source-configuration for use by [bosh-deployment-resource](https://github.com/cloudfoundry/bosh-deployment-resource)
+
+TODO: additionally formatting target-dir/bdr-source-configuration for use by [bosh-deployment-resource](https://github.com/cloudfoundry/bosh-deployment-resource)
 
 ### `out`: Deploy, upgrade, and destroy a BOSH director and its associated iaas environment
 
@@ -17,7 +18,7 @@ all your bbl plans, ups, and destroys!
 ### `check`: emits new versions when "out" runs?
 
 #### Source Parameters:
-
+note that bbl arg keys use dashes, not underscores.
 ```yaml
 resource_types:
 - name: bbl-state-resource
@@ -31,8 +32,8 @@ resources:
   source:
     name: your-environment-name
     iaas: gcp
-    gcp_region: us-east-1
-    gcp_service_account_key: {{bbl_gcp_service_account_key}}
+    gcp-region: us-east-1
+    gcp-service-account-key: {{bbl_gcp_service_account_key}}
 ```
 
 ## Development:

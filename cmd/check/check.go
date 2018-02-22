@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
@@ -13,7 +12,6 @@ import (
 
 func main() {
 	rawBytes, err := ioutil.ReadAll(os.Stdin)
-	fmt.Fprintf(os.Stderr, "bytes passed: %s\n", rawBytes)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err)
 		os.Exit(1)
@@ -27,7 +25,8 @@ func main() {
 
 	storageClient, err := storage.NewStorageClient(checkRequest.Source)
 	if err != nil {
-		log.Fatalf("failed to create storage client: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to create storage client: %s", err.Error())
+		os.Exit(1)
 	}
 
 	version, err := storageClient.Version()
@@ -35,11 +34,13 @@ func main() {
 		fmt.Fprintf(os.Stdout, `[]`)
 		os.Exit(0)
 	} else if err != nil {
-		log.Fatalf("failed to fetch bbl state version: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to fetch bbl state version: %s", err.Error())
+		os.Exit(1)
 	}
 
-	err = json.NewEncoder(os.Stdout).Encode([]concourse.Version{version})
+	err = json.NewEncoder(os.Stdout).Encode(version)
 	if err != nil {
-		log.Fatalf("failed to marshal version: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to marshal version: %s", err.Error())
+		os.Exit(1)
 	}
 }

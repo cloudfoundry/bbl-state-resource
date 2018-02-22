@@ -38,6 +38,12 @@
   revision = "cc9eb1d7ad760af14e8f918698f745e80377af4f"
 
 [[projects]]
+  name = "github.com/fatih/structs"
+  packages = ["."]
+  revision = "a720dfa8df582c51dee1b36feabb906bde1588bd"
+  version = "v1.0"
+
+[[projects]]
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -104,6 +110,8 @@
   packages = [
     ".",
     "format",
+    "gbytes",
+    "gexec",
     "internal/assertion",
     "internal/asyncassertion",
     "internal/oraclematcher",
@@ -291,6 +299,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c4c7e9cd59f974b816c70b547b66caeb779d444ce2a78327a8c61e75ad93bdcb"
+  inputs-digest = "4be35b8a32f72484e39b66062b229ef8866ab5497df16f9c079d9a56cbafd90e"
   solver-name = "gps-cdcl"
   solver-version = 1
