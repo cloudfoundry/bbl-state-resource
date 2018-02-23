@@ -26,7 +26,7 @@ RUN apt-get update && apt-get -y install software-properties-common && \
                        sqlite unzip wget curl zlib1g-dev zlibc && \
     apt-get remove -y --purge software-properties-common
 
-ENV bbl_version 6.2.2
+ARG bbl_version=6.2.1
 RUN wget https://github.com/cloudfoundry/bosh-bootloader/releases/download/v${bbl_version}/bbl-v${bbl_version}_linux_x86-64 -O /usr/local/bin/bbl \
     && chmod +x /usr/local/bin/bbl
 
