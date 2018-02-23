@@ -2,13 +2,17 @@
 
 .DEFAULT_GOAL := help
 
+GO_SRCS = $(shell find . -type f -name '*.go')
+
 test: ## run all the tests
 	ginkgo -r -race --randomizeAllSpecs
 
-docker: ## rebuild your local docker container, test all the builds
+docker: $(GO_SRCS) ## rebuild your local docker container, test all the builds
 	docker build --rm -t bbl-state-resource .
+	touch .docker_built # sentinel file indicating time we last built
 
-push: docker ## commit and send it to it's canonical location within dockerhub
+.docker_built: docker
+push: .docker_built ## commit and send it to it's canonical location within dockerhub
 	# git push
 	docker tag bbl-state-resource cfinfrastructure/bbl-state-resource
 	docker push cfinfrastructure/bbl-state-resource
