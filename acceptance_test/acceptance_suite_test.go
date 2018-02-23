@@ -42,9 +42,10 @@ var _ = BeforeSuite(func() {
 	p := struct {
 		ProjectId string `json:"project_id"`
 	}{}
-	if err := json.Unmarshal([]byte(serviceAccountKey), &p); err != nil {
-		return Storage{}, fmt.Errorf("Unmarshalling account key for project id: %s", err)
-	}
+
+	err = json.Unmarshal([]byte(serviceAccountKey), &p)
+	Expect(err).NotTo(HaveOccurred())
+
 	projectId = p.ProjectId
 })
 
