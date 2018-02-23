@@ -6,10 +6,8 @@ import (
 	"fmt"
 )
 
-const MissingTarget = "MISSING-TARGET-SHORTCIRCUIT.example.com"
-
 type InRequest struct {
-	Source Source `json:"source"`
+	Source  Source  `json:"source"`
 	Version Version `json:"version"`
 }
 

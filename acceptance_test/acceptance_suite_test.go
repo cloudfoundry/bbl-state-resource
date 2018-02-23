@@ -1,4 +1,4 @@
-package main_test
+package acceptance_test
 
 import (
 	"testing"
@@ -10,16 +10,22 @@ import (
 
 func TestCmd(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "In Binary Suite")
+	RunSpecs(t, "Acceptance Test Suite")
 }
 
 var (
-	inBinaryPath string
+	checkBinaryPath string
+	inBinaryPath    string
+	outBinaryPath   string
 )
 
 var _ = BeforeSuite(func() {
 	var err error
+	checkBinaryPath, err = gexec.Build("github.com/cloudfoundry/bbl-state-resource/cmd/in")
+	Expect(err).NotTo(HaveOccurred())
 	inBinaryPath, err = gexec.Build("github.com/cloudfoundry/bbl-state-resource/cmd/in")
+	Expect(err).NotTo(HaveOccurred())
+	outBinaryPath, err = gexec.Build("github.com/cloudfoundry/bbl-state-resource/cmd/in")
 	Expect(err).NotTo(HaveOccurred())
 })
 
