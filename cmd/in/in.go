@@ -43,7 +43,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = json.NewEncoder(os.Stdout).Encode(version)
+	outMap := map[string]concourse.Version{"version": version}
+	err = json.NewEncoder(os.Stdout).Encode(outMap)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to marshal version: %s", err.Error())
 		os.Exit(1)

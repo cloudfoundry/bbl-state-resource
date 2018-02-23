@@ -79,7 +79,7 @@ var _ = Describe("in", func() {
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(session, 10).Should(gexec.Exit(0))
-		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`[{"ref":"%s"}]`, version.Ref)))
+		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`{"version":{"ref":"%s"}}`, version.Ref)))
 		f, err := os.Open(filepath.Join(targetDir, "bbl-state.json"))
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(gbytes.BufferReader(f)).Should(gbytes.Say(bblStateContents))

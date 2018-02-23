@@ -55,7 +55,7 @@ func (s Storage) Download(targetDir string) (concourse.Version, error) {
 		return concourse.Version{}, err
 	}
 
-	return s.Upload(targetDir)
+	return s.Version()
 }
 
 func (s Storage) Upload(filePath string) (concourse.Version, error) {
@@ -82,9 +82,5 @@ func (s Storage) Upload(filePath string) (concourse.Version, error) {
 		return concourse.Version{}, err
 	}
 
-	version, err := s.Object.Version()
-	if err != nil {
-		return concourse.Version{}, err
-	}
-	return concourse.Version{Ref: version}, nil
+	return s.Version()
 }

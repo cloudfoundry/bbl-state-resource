@@ -79,7 +79,7 @@ var _ = Describe("check", func() {
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(session, 10).Should(gexec.Exit(0))
-		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`[{"ref":"%s"}]`, version.Ref)))
+		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`\[{"ref":"%s"}\]`, version.Ref)))
 	})
 
 	Context("when there is nothing stored in gcp", func() {

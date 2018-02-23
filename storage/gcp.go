@@ -44,7 +44,6 @@ func (o objectHandleWrapper) NewWriter() io.WriteCloser {
 func NewGCSStorage(serviceAccountKey string, bucketName string) (Storage, error) {
 	storageJwtConf, err := oauthgoogle.JWTConfigFromJSON([]byte(serviceAccountKey), gcs.ScopeReadWrite)
 	if err != nil {
-		fmt.Printf("!!!!%s\n", serviceAccountKey)
 		return Storage{}, fmt.Errorf("failed to form JWT config from GCP storage account key: %s", err)
 	}
 	ctx := context.Background()

@@ -54,7 +54,8 @@ func main() {
 		log.Fatalf("failed to upload bbl state: %s", err.Error())
 	}
 
-	err = json.NewEncoder(os.Stdout).Encode(version)
+	outMap := map[string]concourse.Version{"version": version}
+	err = json.NewEncoder(os.Stdout).Encode(outMap)
 	if err != nil {
 		log.Fatalf("failed to marshal version: %s", err.Error())
 	}
