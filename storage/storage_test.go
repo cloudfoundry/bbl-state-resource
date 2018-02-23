@@ -98,7 +98,7 @@ var _ = Describe("Storage", func() {
 
 	Describe("Download", func() {
 		Context("when the object already exists", func() {
-			It("downloads the object, tars it, and re-uploads it", func() {
+			It("downloads the object and untars it", func() {
 				version, err := store.Download(storageDir)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(version.Ref).To(Equal("fresh-version"))
@@ -106,11 +106,8 @@ var _ = Describe("Storage", func() {
 				Expect(fakeTarrer.ReadCall.Receives.Input).To(Equal(fakeReadCloser))
 				Expect(fakeTarrer.ReadCall.Receives.Destination).To(Equal(storageDir))
 
-				Expect(fakeTarrer.WriteCall.Receives.Output).To(Equal(fakeWriteCloser))
-				Expect(fakeTarrer.WriteCall.Receives.Sources).To(ConsistOf(filename))
-
 				Expect(fakeReadCloser.CloseCall.CallCount).To(Equal(1))
-				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(1))
+				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(0))
 			})
 		})
 
