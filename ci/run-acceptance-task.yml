@@ -14,4 +14,3 @@ run:
 
 params:
   BBL_GCP_SERVICE_ACCOUNT_KEY:
-  BBL_GCP_REGION:
