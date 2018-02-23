@@ -1,0 +1,12 @@
+#!/bin/bash
+ROOT="${PWD}"
+
+mkdir -p "${GOPATH}/src/github.com/cloudfoundry"
+
+pushd "${GOPATH}/src/github.com/cloudfoundry" > /dev/null
+  ln -s "${ROOT}/bbl-state-resource"
+
+  pushd bbl-state-resource > /dev/null
+    ginkgo -r -p -race -randomizeAllSpecs $@
+  popd > /dev/null
+popd > /dev/null
