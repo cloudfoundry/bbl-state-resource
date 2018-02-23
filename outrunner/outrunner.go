@@ -20,7 +20,7 @@ func RunInjected(r commandRunner, outRequest concourse.OutRequest, bblStateDir s
 	}
 
 	for key, value := range structs.Map(outRequest.Source) {
-		outRequest.Params.Args[key] = value
+		addArg(key, value)
 	}
 
 	for key, value := range outRequest.Params.Args {
