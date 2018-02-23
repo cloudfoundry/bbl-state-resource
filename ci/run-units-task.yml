@@ -9,5 +9,5 @@ inputs:
 - name: bbl-state-resource-src
 
 run:
-  path: bbl-state-resource-src/ci/run-units
+  path: bbl-state-resource-src/ci/run-tests
   args: [-skipPackage acceptance_test]
