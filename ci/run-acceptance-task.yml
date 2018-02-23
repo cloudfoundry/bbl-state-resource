@@ -7,10 +7,10 @@ image_resource:
 
 inputs:
 - name: bbl-state-resource-src
+- name: bbl-release
 
 run:
-  path: bbl-state-resource-src/ci/run-tests
-  args: [acceptance_test -v]
+  path: bbl-state-resource-src/ci/run-acceptance-tests
 
 params:
   BBL_GCP_SERVICE_ACCOUNT_KEY:

@@ -1,12 +1,15 @@
 #!/bin/bash -exu
 ROOT="${PWD}"
 
+mv ${ROOT}/bbl-release/bbl-*_linux_x86-64 /usr/bin/bbl
+chmod +x /usr/bin/bbl
+
 mkdir -p "${GOPATH}/src/github.com/cloudfoundry"
 
 pushd "${GOPATH}/src/github.com/cloudfoundry" > /dev/null
   ln -s "${ROOT}/bbl-state-resource-src" bbl-state-resource
 
   pushd bbl-state-resource > /dev/null
-    ginkgo -r -p -race -randomizeAllSpecs $@
+    ginkgo -r -p -race -randomizeAllSpecs -v acceptance_test
   popd > /dev/null
 popd > /dev/null
