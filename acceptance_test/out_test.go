@@ -28,7 +28,7 @@ var _ = Describe("out", func() {
 	BeforeEach(func() {
 		upRequest := fmt.Sprintf(`{
 			"source": {
-				"name": "out-test-test-env",
+				"name": "%s-out-test-test-env",
 				"iaas": "gcp",
 				"gcp-region": "us-east1",
 				"gcp-service-account-key": %s
@@ -36,7 +36,7 @@ var _ = Describe("out", func() {
 			"params": {
 				"command": "up"
 			}
-		}`, strconv.Quote(serviceAccountKey))
+		}`, projectId, strconv.Quote(serviceAccountKey))
 
 		var err error
 		upTargetDir, err = ioutil.TempDir("", "up_out_test")

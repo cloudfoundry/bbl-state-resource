@@ -29,13 +29,13 @@ var _ = Describe("check", func() {
 	BeforeEach(func() {
 		checkRequest := fmt.Sprintf(`{
 			"source": {
-				"name": "check-test-test-env",
+				"name": "%s-check-test-test-env",
 				"iaas": "gcp",
 				"gcp-region": "us-east1",
 				"gcp-service-account-key": %s
 			},
 			"version": {"ref": "the-greatest"}
-		}`, strconv.Quote(serviceAccountKey))
+		}`, projectId, strconv.Quote(serviceAccountKey))
 
 		var req concourse.InRequest
 		err := json.Unmarshal([]byte(checkRequest), &req)

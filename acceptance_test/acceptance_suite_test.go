@@ -1,6 +1,7 @@
 package acceptance_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -21,6 +22,7 @@ var (
 	inBinaryPath      string
 	outBinaryPath     string
 	serviceAccountKey string
+	projectId         string
 )
 
 var _ = BeforeSuite(func() {
@@ -36,6 +38,14 @@ var _ = BeforeSuite(func() {
 
 	serviceAccountKey, err = getGCPServiceAccountKey(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY"))
 	Expect(err).NotTo(HaveOccurred())
+
+	p := struct {
+		ProjectId string `json:"project_id"`
+	}{}
+	if err := json.Unmarshal([]byte(serviceAccountKey), &p); err != nil {
+		return Storage{}, fmt.Errorf("Unmarshalling account key for project id: %s", err)
+	}
+	projectId = p.ProjectId
 })
 
 var _ = AfterSuite(func() {
