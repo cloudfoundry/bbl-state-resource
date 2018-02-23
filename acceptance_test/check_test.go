@@ -20,20 +20,13 @@ import (
 
 var _ = Describe("check", func() {
 	var (
-		targetDir         string
-		bblStateContents  string
-		serviceAccountKey string
-		check             *bytes.Buffer
-		version           concourse.Version
+		targetDir        string
+		bblStateContents string
+		check            *bytes.Buffer
+		version          concourse.Version
 	)
 
 	BeforeEach(func() {
-		Expect(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY")).NotTo(Equal(""))
-
-		var err error
-		serviceAccountKey, err = readGCPServiceAccountKey(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY"))
-		Expect(err).NotTo(HaveOccurred())
-
 		checkRequest := fmt.Sprintf(`{
 			"source": {
 				"name": "check-test-test-env",
@@ -45,7 +38,7 @@ var _ = Describe("check", func() {
 		}`, strconv.Quote(serviceAccountKey))
 
 		var req concourse.InRequest
-		err = json.Unmarshal([]byte(checkRequest), &req)
+		err := json.Unmarshal([]byte(checkRequest), &req)
 		Expect(err).NotTo(HaveOccurred())
 		// this client isn't well tested, so we're going
 		// to violate some abstraction layers to test it here
@@ -90,7 +83,7 @@ var _ = Describe("check", func() {
 	})
 
 	Context("when there is nothing stored in gcp", func() {
-		BeforeEach(func() {
+		It("prints an empty json list", func() {
 			checkRequest := fmt.Sprintf(`{
 				"source": {
 					"name": "empty-bucket-check-test",
@@ -100,12 +93,9 @@ var _ = Describe("check", func() {
 				},
 				"version": {"ref": "the-greatest"}
 			}`, strconv.Quote(serviceAccountKey))
-			check = bytes.NewBuffer([]byte(checkRequest))
-		})
 
-		It("prints an empty json list", func() {
 			cmd := exec.Command(checkBinaryPath, targetDir)
-			cmd.Stdin = check
+			cmd.Stdin = bytes.NewBuffer([]byte(checkRequest))
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -114,18 +104,3 @@ var _ = Describe("check", func() {
 		})
 	})
 })
-
-func getGCPServiceAccountKey(key string) (string, error) {
-	if _, err := os.Stat(key); err != nil {
-		return key, nil
-	}
-	return readGCPServiceAccountKey(key)
-}
-
-func readGCPServiceAccountKey(path string) (string, error) {
-	keyBytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return "", fmt.Errorf("Reading service account key: %v", err)
-	}
-	return string(keyBytes), nil
-}

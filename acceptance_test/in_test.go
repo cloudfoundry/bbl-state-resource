@@ -27,11 +27,6 @@ var _ = Describe("in", func() {
 	)
 
 	BeforeEach(func() {
-		Expect(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY")).NotTo(Equal(""))
-
-		serviceAccountKey, err := readGCPServiceAccountKey(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY"))
-		Expect(err).NotTo(HaveOccurred())
-
 		inRequest := fmt.Sprintf(`{
 			"source": {
 				"name": "in-test-test-env",
@@ -43,7 +38,7 @@ var _ = Describe("in", func() {
 		}`, strconv.Quote(serviceAccountKey))
 
 		var req concourse.InRequest
-		err = json.Unmarshal([]byte(inRequest), &req)
+		err := json.Unmarshal([]byte(inRequest), &req)
 		Expect(err).NotTo(HaveOccurred())
 		// this client isn't well tested, so we're going
 		// to violate some abstraction layers to test it here
@@ -90,18 +85,3 @@ var _ = Describe("in", func() {
 		Eventually(gbytes.BufferReader(f)).Should(gbytes.Say(bblStateContents))
 	})
 })
-
-func getGCPServiceAccountKey(key string) (string, error) {
-	if _, err := os.Stat(key); err != nil {
-		return key, nil
-	}
-	return readGCPServiceAccountKey(key)
-}
-
-func readGCPServiceAccountKey(path string) (string, error) {
-	keyBytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return "", fmt.Errorf("Reading service account key: %v", err)
-	}
-	return string(keyBytes), nil
-}

@@ -26,11 +26,6 @@ var _ = Describe("out", func() {
 	)
 
 	BeforeEach(func() {
-		Expect(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY")).NotTo(Equal(""))
-
-		serviceAccountKey, err := readGCPServiceAccountKey(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY"))
-		Expect(err).NotTo(HaveOccurred())
-
 		upRequest := fmt.Sprintf(`{
 			"source": {
 				"name": "out-test-test-env",
@@ -43,6 +38,7 @@ var _ = Describe("out", func() {
 			}
 		}`, strconv.Quote(serviceAccountKey))
 
+		var err error
 		upTargetDir, err = ioutil.TempDir("", "up_out_test")
 		Expect(err).NotTo(HaveOccurred())
 		upOutInput = bytes.NewBuffer([]byte(upRequest))
@@ -92,18 +88,3 @@ var _ = Describe("out", func() {
 		})
 	})
 })
-
-func getGCPServiceAccountKey(key string) (string, error) {
-	if _, err := os.Stat(key); err != nil {
-		return key, nil
-	}
-	return readGCPServiceAccountKey(key)
-}
-
-func readGCPServiceAccountKey(path string) (string, error) {
-	keyBytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return "", fmt.Errorf("Reading service account key: %v", err)
-	}
-	return string(keyBytes), nil
-}
