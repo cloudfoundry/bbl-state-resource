@@ -86,13 +86,13 @@ var _ = Describe("check", func() {
 		It("prints an empty json list", func() {
 			checkRequest := fmt.Sprintf(`{
 				"source": {
-					"name": "empty-bucket-check-test",
+					"name": "%s-empty-bucket-check-test",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s
 				},
 				"version": {"ref": "the-greatest"}
-			}`, strconv.Quote(serviceAccountKey))
+			}`, projectId, strconv.Quote(serviceAccountKey))
 
 			cmd := exec.Command(checkBinaryPath, targetDir)
 			cmd.Stdin = bytes.NewBuffer([]byte(checkRequest))
