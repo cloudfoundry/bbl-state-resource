@@ -10,7 +10,7 @@ inputs:
 
 run:
   path: bbl-state-resource-src/ci/run-tests
-  args: [acceptance_test]
+  args: [acceptance_test -v]
 
 params:
   BBL_GCP_SERVICE_ACCOUNT_KEY:
