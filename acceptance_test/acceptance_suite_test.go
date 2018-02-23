@@ -34,7 +34,7 @@ var _ = BeforeSuite(func() {
 
 	Expect(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY")).NotTo(Equal(""))
 
-	serviceAccountKey, err = readGCPServiceAccountKey(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY"))
+	serviceAccountKey, err = getGCPServiceAccountKey(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY"))
 	Expect(err).NotTo(HaveOccurred())
 })
 
