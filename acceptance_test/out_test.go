@@ -92,7 +92,7 @@ var _ = Describe("out", func() {
 	})
 
 	Context("bbl exits 1 due to misconfiguration", func() {
-		FIt("still uploads the failed state", func() {
+		It("still uploads the failed state", func() {
 			var (
 				badInput io.Reader
 			)
