@@ -49,7 +49,6 @@ var _ = Describe("check", func() {
 		By("uploading a bogus bbl state with some unique contents", func() {
 			uploadDir, err := ioutil.TempDir("", "upload_dir")
 			Expect(err).NotTo(HaveOccurred())
-			defer os.RemoveAll(uploadDir)
 			filename := filepath.Join(uploadDir, "bbl-state.json")
 			f, err := os.Create(filename)
 			Expect(err).NotTo(HaveOccurred())
@@ -63,18 +62,11 @@ var _ = Describe("check", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		targetDir, err = ioutil.TempDir("", "check_test")
-		Expect(err).NotTo(HaveOccurred())
-
 		check = bytes.NewBuffer([]byte(checkRequest))
 	})
 
-	AfterEach(func() {
-		os.RemoveAll(targetDir) // ignore the error
-	})
-
 	It("prints the latest version of the resource", func() {
-		cmd := exec.Command(checkBinaryPath, targetDir)
+		cmd := exec.Command(checkBinaryPath)
 		cmd.Stdin = check
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())

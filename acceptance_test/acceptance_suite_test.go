@@ -34,7 +34,7 @@ var _ = BeforeSuite(func() {
 	outBinaryPath, err = gexec.Build("github.com/cloudfoundry/bbl-state-resource/cmd/out")
 	Expect(err).NotTo(HaveOccurred())
 
-	Expect(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY")).NotTo(Equal(""))
+	Expect(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY")).NotTo(Equal(""), "Please set BBL_GCP_SERVICE_ACCOUNT_KEY environment variable to a valid GCP service account key.")
 
 	serviceAccountKey, err = getGCPServiceAccountKey(os.Getenv("BBL_GCP_SERVICE_ACCOUNT_KEY"))
 	Expect(err).NotTo(HaveOccurred())

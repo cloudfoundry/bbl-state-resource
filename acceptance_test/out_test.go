@@ -63,14 +63,12 @@ var _ = Describe("out", func() {
 		})
 
 		AfterEach(func() {
-			defer os.RemoveAll(upTargetDir)   // ignore the error
-			defer os.RemoveAll(downTargetDir) // ignore the error
 			By("bbling down", func() {
 				cmd := exec.Command(outBinaryPath, downTargetDir)
 				cmd.Stdin = downOutInput
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 40*time.Minute).Should(gexec.Exit(0))
+				Eventually(session, 40*time.Minute).Should(gexec.Exit(0), "bbl down should've suceeded!")
 				Eventually(session.Out).Should(gbytes.Say(`{"version":{"ref":"[0-9a-f]+"}}`))
 				_, err = os.Stat(filepath.Join(downTargetDir, "bbl-state.json"))
 				Expect(err).To(HaveOccurred())
@@ -83,7 +81,7 @@ var _ = Describe("out", func() {
 				cmd.Stdin = upOutInput
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 40*time.Minute).Should(gexec.Exit(0))
+				Eventually(session, 40*time.Minute).Should(gexec.Exit(0), "bbl up should've suceeded!")
 				Eventually(session.Out).Should(gbytes.Say(`{"version":{"ref":"[0-9a-f]+"}}`))
 				_, err = os.Open(filepath.Join(upTargetDir, "bbl-state.json"))
 				Expect(err).NotTo(HaveOccurred())
@@ -104,36 +102,42 @@ var _ = Describe("out", func() {
 					"gcp-service-account-key": %s
 				},
 				"params": {
-					"command": "invalid-command"
+					"command": "plan",
+					"args": {
+						"iaas": "intentionally-make-bbl-fail"
+					}
 				}
 			}`, projectId, strconv.Quote(serviceAccountKey))
 			badInput = bytes.NewBuffer([]byte(badRequest))
 			putTargetDir, err := ioutil.TempDir("", "bad_out_test")
 			Expect(err).NotTo(HaveOccurred())
 
-			var bblStateContents string
 			By("bbling up", func() {
 				cmd := exec.Command(outBinaryPath, putTargetDir)
 				cmd.Stdin = badInput
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 10).Should(gexec.Exit(1))
+				Eventually(session, 10).Should(gexec.Exit(1), "bbl up should've failed when we misconfigured it")
 				Eventually(session.Out).Should(gbytes.Say(`{"version":{"ref":"[0-9a-f]+"}}`))
+			})
 
+			var bblStateContents string
+			By("copying the failed bbl-state.json into a bblStateContents", func() {
 				f, err := os.Open(filepath.Join(putTargetDir, "bbl-state.json"))
-				_, err = io.Copy(f, bytes.NewBufferString(bblStateContents))
+				Expect(err).NotTo(HaveOccurred())
+				_, err = io.Copy(bytes.NewBufferString(bblStateContents), f)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
 			By("getting the resource again", func() {
 				inRequest := fmt.Sprintf(`{
-				"source": {
-					"name": "%s-bad-out-test-env",
-					"iaas": "gcp",
-					"gcp-region": "us-east1",
-					"gcp-service-account-key": %s
-				},
-				"version": {"ref": "the-greatest"}
+					"source": {
+						"name": "%s-bad-out-test-env",
+						"iaas": "gcp",
+						"gcp-region": "us-east1",
+						"gcp-service-account-key": %s
+					},
+					"version": {"ref": "the-greatest"}
 				}`, projectId, strconv.Quote(serviceAccountKey))
 
 				getTargetDir, err := ioutil.TempDir("", "bad_test")

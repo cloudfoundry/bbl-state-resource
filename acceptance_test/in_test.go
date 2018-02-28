@@ -49,7 +49,6 @@ var _ = Describe("in", func() {
 		By("uploading a bogus bbl state with some unique contents", func() {
 			uploadDir, err := ioutil.TempDir("", "upload_dir")
 			Expect(err).NotTo(HaveOccurred())
-			defer os.RemoveAll(uploadDir)
 			filename := filepath.Join(uploadDir, "bbl-state.json")
 			f, err := os.Create(filename)
 			Expect(err).NotTo(HaveOccurred())
@@ -67,10 +66,6 @@ var _ = Describe("in", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		inInput = bytes.NewBuffer([]byte(inRequest))
-	})
-
-	AfterEach(func() {
-		os.RemoveAll(targetDir) // ignore the error
 	})
 
 	It("downloads the latest specified version of the resource", func() {
