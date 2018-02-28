@@ -18,7 +18,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var _ = FDescribe("check", func() {
+var _ = Describe("check", func() {
 	Context("when there is something in gcp", func() {
 		var (
 			bblStateContents string
