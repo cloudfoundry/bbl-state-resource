@@ -18,15 +18,15 @@ import (
 )
 
 var _ = Describe("out", func() {
-	var (
-		upTargetDir string
-		upOutInput  *bytes.Buffer
-
-		downTargetDir string
-		downOutInput  *bytes.Buffer
-	)
-
 	Context("bbl succeeds", func() {
+		var (
+			upTargetDir string
+			upOutInput  *bytes.Buffer
+
+			downTargetDir string
+			downOutInput  *bytes.Buffer
+		)
+
 		BeforeEach(func() {
 			upRequest := fmt.Sprintf(`{
 				"source": {
@@ -89,7 +89,11 @@ var _ = Describe("out", func() {
 		})
 	})
 
-	Context("bbl exits 1 due to misconfiguration", func() {
+	// at the moment, this is not easily testable.
+	// it would require a way for bbl to consistently fail on the first command but also
+	// write files, OR a way to delete uploaded state in the aftereach so that we can
+	// inject a fake file like the test does as it is written now
+	PContext("bbl exits 1 due to misconfiguration", func() {
 		It("still uploads the failed state", func() {
 			var (
 				badInput io.Reader
@@ -102,15 +106,19 @@ var _ = Describe("out", func() {
 					"gcp-service-account-key": %s
 				},
 				"params": {
-					"command": "plan",
-					"args": {
-						"iaas": "intentionally-make-bbl-fail"
-					}
+					"command": "make-bbl-fail"
 				}
 			}`, projectId, strconv.Quote(serviceAccountKey))
 			badInput = bytes.NewBuffer([]byte(badRequest))
 			putTargetDir, err := ioutil.TempDir("", "bad_out_test")
 			Expect(err).NotTo(HaveOccurred())
+
+			bblStateContents := fmt.Sprintf(`{ "fake-json": "%s" }`, putTargetDir)
+			By("putting a bogus bbl-state.json into a bblStateContents", func() {
+				bblStatePath := filepath.Join(putTargetDir, "not-bbl-state.json")
+				err = ioutil.WriteFile(bblStatePath, []byte(bblStateContents), os.ModePerm)
+				Expect(err).NotTo(HaveOccurred())
+			})
 
 			By("bbling up", func() {
 				cmd := exec.Command(outBinaryPath, putTargetDir)
@@ -119,14 +127,6 @@ var _ = Describe("out", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10).Should(gexec.Exit(1), "bbl up should've failed when we misconfigured it")
 				Eventually(session.Out).Should(gbytes.Say(`{"version":{"ref":"[0-9a-f]+"}}`))
-			})
-
-			var bblStateContents string
-			By("copying the failed bbl-state.json into a bblStateContents", func() {
-				f, err := os.Open(filepath.Join(putTargetDir, "bbl-state.json"))
-				Expect(err).NotTo(HaveOccurred())
-				_, err = io.Copy(bytes.NewBufferString(bblStateContents), f)
-				Expect(err).NotTo(HaveOccurred())
 			})
 
 			By("getting the resource again", func() {
@@ -150,7 +150,7 @@ var _ = Describe("out", func() {
 				Eventually(session, 10).Should(gexec.Exit(0))
 				Eventually(session.Out).Should(gbytes.Say(`{"version":{"ref":"[0-9a-f]+"}}`))
 
-				f, err := os.Open(filepath.Join(getTargetDir, "bbl-state.json"))
+				f, err := os.Open(filepath.Join(getTargetDir, "not-bbl-state.json"))
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(gbytes.BufferReader(f)).Should(gbytes.Say(bblStateContents))
 			})
