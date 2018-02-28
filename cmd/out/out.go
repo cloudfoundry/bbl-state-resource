@@ -44,27 +44,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	var bblError error
-	defer func() { // upload state even on failure for introspectability
-		version, err := storageClient.Upload(stateDir)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to upload bbl state: %s", err.Error())
-			os.Exit(1)
-		}
-
-		outMap := map[string]concourse.Version{"version": version}
-		err = json.NewEncoder(os.Stdout).Encode(outMap)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to marshal version: %s", err.Error())
-			os.Exit(1)
-		}
-		if bblError != nil {
-			os.Exit(1)
-		}
-	}()
-
-	bblError = outrunner.RunBBL(outRequest, stateDir)
+	bblError := outrunner.RunBBL(outRequest, stateDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to run bbl command: %s", err.Error())
+	}
+
+	version, err := storageClient.Upload(stateDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to upload bbl state: %s", err.Error())
+		os.Exit(1)
+	}
+
+	fmt.Fprintf(os.Stderr, "successfully uploaded bbl state!")
+
+	outMap := map[string]concourse.Version{"version": version}
+	err = json.NewEncoder(os.Stdout).Encode(outMap)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to marshal version: %s", err.Error())
+		os.Exit(1)
+	}
+	if bblError != nil {
+		os.Exit(1)
 	}
 }
