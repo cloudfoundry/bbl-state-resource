@@ -121,8 +121,8 @@ var _ = Describe("out", func() {
 				Eventually(session.Out).Should(gbytes.Say(`{"version":{"ref":"[0-9a-f]+"}}`))
 
 				f, err := os.Open(filepath.Join(putTargetDir, "bbl-state.json"))
+				_, err = io.Copy(f, bytes.NewBufferString(bblStateContents))
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(gbytes.BufferReader(f)).Should(gbytes.Say(bblStateContents))
 			})
 
 			By("getting the resource again", func() {
