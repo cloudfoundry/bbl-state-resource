@@ -18,60 +18,60 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var _ = Describe("check", func() {
-	var (
-		targetDir        string
-		bblStateContents string
-		check            *bytes.Buffer
-		version          concourse.Version
-	)
+var _ = FDescribe("check", func() {
+	Context("when there is something in gcp", func() {
+		var (
+			bblStateContents string
+			check            *bytes.Buffer
+			version          concourse.Version
+		)
+		BeforeEach(func() {
+			checkRequest := fmt.Sprintf(`{
+				"source": {
+					"name": "%s-check-test-test-env",
+					"iaas": "gcp",
+					"gcp-region": "us-east1",
+					"gcp-service-account-key": %s
+				},
+				"version": {"ref": "the-greatest"}
+			}`, projectId, strconv.Quote(serviceAccountKey))
 
-	BeforeEach(func() {
-		checkRequest := fmt.Sprintf(`{
-			"source": {
-				"name": "%s-check-test-test-env",
-				"iaas": "gcp",
-				"gcp-region": "us-east1",
-				"gcp-service-account-key": %s
-			},
-			"version": {"ref": "the-greatest"}
-		}`, projectId, strconv.Quote(serviceAccountKey))
-
-		var req concourse.InRequest
-		err := json.Unmarshal([]byte(checkRequest), &req)
-		Expect(err).NotTo(HaveOccurred())
-		// this client isn't well tested, so we're going
-		// to violate some abstraction layers to test it here
-		// against the real api
-		client, err := storage.NewStorageClient(req.Source)
-		Expect(err).NotTo(HaveOccurred())
-
-		By("uploading a bogus bbl state with some unique contents", func() {
-			uploadDir, err := ioutil.TempDir("", "upload_dir")
+			var req concourse.InRequest
+			err := json.Unmarshal([]byte(checkRequest), &req)
 			Expect(err).NotTo(HaveOccurred())
-			filename := filepath.Join(uploadDir, "bbl-state.json")
-			f, err := os.Create(filename)
-			Expect(err).NotTo(HaveOccurred())
-			defer f.Close()
-
-			bblStateContents = fmt.Sprintf(`{"randomDir": "%s"}`, uploadDir)
-			_, err = f.Write([]byte(bblStateContents))
+			// this client isn't well tested, so we're going
+			// to violate some abstraction layers to test it here
+			// against the real api
+			client, err := storage.NewStorageClient(req.Source)
 			Expect(err).NotTo(HaveOccurred())
 
-			version, err = client.Upload(uploadDir)
-			Expect(err).NotTo(HaveOccurred())
+			By("uploading a bogus bbl state with some unique contents", func() {
+				uploadDir, err := ioutil.TempDir("", "upload_dir")
+				Expect(err).NotTo(HaveOccurred())
+				filename := filepath.Join(uploadDir, "bbl-state.json")
+				f, err := os.Create(filename)
+				Expect(err).NotTo(HaveOccurred())
+				defer f.Close()
+
+				bblStateContents = fmt.Sprintf(`{"randomDir": "%s"}`, uploadDir)
+				_, err = f.Write([]byte(bblStateContents))
+				Expect(err).NotTo(HaveOccurred())
+
+				version, err = client.Upload(uploadDir)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			check = bytes.NewBuffer([]byte(checkRequest))
 		})
 
-		check = bytes.NewBuffer([]byte(checkRequest))
-	})
-
-	It("prints the latest version of the resource", func() {
-		cmd := exec.Command(checkBinaryPath)
-		cmd.Stdin = check
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-		Eventually(session, 10).Should(gexec.Exit(0))
-		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`\[{"ref":"%s"}\]`, version.Ref)))
+		It("prints the latest version of the resource", func() {
+			cmd := exec.Command(checkBinaryPath)
+			cmd.Stdin = check
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, 10).Should(gexec.Exit(0))
+			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`\[{"ref":"%s"}\]`, version.Ref)))
+		})
 	})
 
 	Context("when there is nothing stored in gcp", func() {
@@ -86,7 +86,7 @@ var _ = Describe("check", func() {
 				"version": {"ref": "the-greatest"}
 			}`, projectId, strconv.Quote(serviceAccountKey))
 
-			cmd := exec.Command(checkBinaryPath, targetDir)
+			cmd := exec.Command(checkBinaryPath)
 			cmd.Stdin = bytes.NewBuffer([]byte(checkRequest))
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
