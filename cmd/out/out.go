@@ -36,6 +36,7 @@ func main() {
 	storageClient, err := storage.NewStorageClient(outRequest.Source)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create storage client: %s", err.Error())
+		os.Exit(1)
 	}
 
 	_, err = storageClient.Download(stateDir)
@@ -55,7 +56,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(os.Stderr, "successfully uploaded bbl state!")
+	fmt.Fprintf(os.Stderr, "successfully uploaded bbl state!\n")
 
 	outMap := map[string]concourse.Version{"version": version}
 	err = json.NewEncoder(os.Stdout).Encode(outMap)

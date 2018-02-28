@@ -29,16 +29,16 @@ var _ = Describe("out", func() {
 	Context("bbl succeeds", func() {
 		BeforeEach(func() {
 			upRequest := fmt.Sprintf(`{
-			"source": {
-				"name": "%s-out-test-test-env",
-				"iaas": "gcp",
-				"gcp-region": "us-east1",
-				"gcp-service-account-key": %s
-			},
-			"params": {
-				"command": "up"
-			}
-		}`, projectId, strconv.Quote(serviceAccountKey))
+				"source": {
+					"name": "%s-out-test-test-env",
+					"iaas": "gcp",
+					"gcp-region": "us-east1",
+					"gcp-service-account-key": %s
+				},
+				"params": {
+					"command": "up"
+				}
+			}`, projectId, strconv.Quote(serviceAccountKey))
 
 			var err error
 			upTargetDir, err = ioutil.TempDir("", "up_out_test")
@@ -46,16 +46,16 @@ var _ = Describe("out", func() {
 			upOutInput = bytes.NewBuffer([]byte(upRequest))
 
 			downRequest := fmt.Sprintf(`{
-			"source": {
-				"name": "out-test-test-env",
-				"iaas": "gcp",
-				"gcp-region": "us-east1",
-				"gcp-service-account-key": %s
-			},
-			"params": {
-				"command": "down"
-			}
-		}`, strconv.Quote(serviceAccountKey))
+				"source": {
+					"name": "%s-out-test-test-env",
+					"iaas": "gcp",
+					"gcp-region": "us-east1",
+					"gcp-service-account-key": %s
+				},
+				"params": {
+					"command": "down"
+				}
+			}`, projectId, strconv.Quote(serviceAccountKey))
 
 			downTargetDir, err = ioutil.TempDir("", "down_out_test")
 			Expect(err).NotTo(HaveOccurred())
