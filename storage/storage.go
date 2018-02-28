@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -60,16 +61,14 @@ func (s Storage) Download(targetDir string) (concourse.Version, error) {
 
 func (s Storage) Upload(filePath string) (concourse.Version, error) {
 	writer := s.Object.NewWriter()
-	paths := []string{}
-	err := filepath.Walk(filePath, func(path string, f os.FileInfo, err error) error {
-		if filePath == path {
-			return nil
-		}
-		paths = append(paths, path)
-		return err
-	})
+	files, err := ioutil.ReadDir(filePath)
 	if err != nil {
 		return concourse.Version{}, err
+	}
+
+	paths := []string{}
+	for _, file := range files {
+		paths = append(paths, filepath.Join(filePath, file.Name()))
 	}
 
 	err = s.Archiver.Write(writer, paths)

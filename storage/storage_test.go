@@ -17,6 +17,7 @@ var _ = Describe("Storage", func() {
 	var (
 		storageDir      string
 		filename        string
+		nestedDirectory string
 		store           storage.Storage
 		fakeTarrer      *fakes.Tarrer
 		fakeObject      *fakes.Object
@@ -40,13 +41,21 @@ var _ = Describe("Storage", func() {
 			storageDir, err = ioutil.TempDir("", "storage_dir")
 			Expect(err).NotTo(HaveOccurred())
 			filename = filepath.Join(storageDir, "bbl-state.json")
-			f, err := os.Create(filename)
+			bblStateFile, err := os.Create(filename)
 			Expect(err).NotTo(HaveOccurred())
-			defer f.Close()
+			defer bblStateFile.Close()
 
 			bblStateContents := fmt.Sprintf(`{"version": 14, "randomDir": "%s"}`, storageDir)
-			_, err = f.Write([]byte(bblStateContents))
+			_, err = bblStateFile.Write([]byte(bblStateContents))
 			Expect(err).NotTo(HaveOccurred())
+
+			nestedDirectory = filepath.Join(storageDir, "nested-dir")
+			err = os.MkdirAll(nestedDirectory, os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			nestedFile := filepath.Join(nestedDirectory, "nested-data.json")
+			f, err := os.Create(nestedFile)
+			Expect(err).NotTo(HaveOccurred())
+			defer f.Close()
 		})
 
 		store = storage.Storage{
@@ -66,7 +75,7 @@ var _ = Describe("Storage", func() {
 			Expect(version.Ref).To(Equal("fresh-version"))
 
 			Expect(fakeTarrer.WriteCall.Receives.Output).To(Equal(fakeWriteCloser))
-			Expect(fakeTarrer.WriteCall.Receives.Sources).To(ConsistOf(filename))
+			Expect(fakeTarrer.WriteCall.Receives.Sources).To(ConsistOf(filename, nestedDirectory))
 
 			Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(1))
 		})
@@ -116,7 +125,7 @@ var _ = Describe("Storage", func() {
 				fakeObject.NewReaderCall.Returns.Error = storage.ObjectNotFoundError
 			})
 
-			It("uploads an empty object", func() {
+			It("uploads an the appropriate object", func() {
 				version, err := store.Download(storageDir)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(version.Ref).To(Equal("fresh-version"))
@@ -124,7 +133,7 @@ var _ = Describe("Storage", func() {
 				Expect(fakeTarrer.ReadCall.CallCount).To(Equal(0))
 
 				Expect(fakeTarrer.WriteCall.Receives.Output).To(Equal(fakeWriteCloser))
-				Expect(fakeTarrer.WriteCall.Receives.Sources).To(ConsistOf(filename))
+				Expect(fakeTarrer.WriteCall.Receives.Sources).To(ConsistOf(filename, nestedDirectory))
 
 				Expect(fakeReadCloser.CloseCall.CallCount).To(Equal(0))
 				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(1))
