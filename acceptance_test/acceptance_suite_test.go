@@ -3,6 +3,7 @@ package acceptance_test
 import (
 	"encoding/json"
 	"fmt"
+	"hash/crc32"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -46,7 +47,7 @@ var _ = BeforeSuite(func() {
 	err = json.Unmarshal([]byte(serviceAccountKey), &p)
 	Expect(err).NotTo(HaveOccurred())
 
-	projectId = p.ProjectId
+	projectId = fmt.Sprintf("%x", crc32.ChecksumIEEE([]byte(p.ProjectId)))
 })
 
 var _ = AfterSuite(func() {

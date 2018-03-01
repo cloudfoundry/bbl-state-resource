@@ -29,7 +29,7 @@ var _ = Describe("in", func() {
 	BeforeEach(func() {
 		inRequest := fmt.Sprintf(`{
 			"source": {
-				"name": "%s-in-test-test-env",
+				"name": "%s-bsr-test-in",
 				"iaas": "gcp",
 				"gcp-region": "us-east1",
 				"gcp-service-account-key": %s

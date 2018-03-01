@@ -28,7 +28,7 @@ var _ = Describe("check", func() {
 		BeforeEach(func() {
 			checkRequest := fmt.Sprintf(`{
 				"source": {
-					"name": "%s-check-test-test-env",
+					"name": "%s-bsr-test-check",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s
@@ -78,7 +78,7 @@ var _ = Describe("check", func() {
 		It("prints an empty json list", func() {
 			checkRequest := fmt.Sprintf(`{
 				"source": {
-					"name": "%s-empty-bucket-check-test",
+					"name": "%s-bsr-test-empty",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s

@@ -30,7 +30,7 @@ var _ = Describe("out", func() {
 		BeforeEach(func() {
 			upRequest := fmt.Sprintf(`{
 				"source": {
-					"name": "%s-out-test-test-env",
+					"name": "%-bsr-test-out",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s
@@ -47,7 +47,7 @@ var _ = Describe("out", func() {
 
 			downRequest := fmt.Sprintf(`{
 				"source": {
-					"name": "%s-out-test-test-env",
+					"name": "%s-bsr-test-out",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s
@@ -100,7 +100,7 @@ var _ = Describe("out", func() {
 			)
 			badRequest := fmt.Sprintf(`{
 				"source": {
-					"name": "%s-bad-out-test-env",
+					"name": "%s-bsr-test-bad",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s
@@ -132,7 +132,7 @@ var _ = Describe("out", func() {
 			By("getting the resource again", func() {
 				inRequest := fmt.Sprintf(`{
 					"source": {
-						"name": "%s-bad-out-test-env",
+						"name": "%s-bsr-test-bad",
 						"iaas": "gcp",
 						"gcp-region": "us-east1",
 						"gcp-service-account-key": %s
