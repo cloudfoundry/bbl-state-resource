@@ -30,7 +30,7 @@ var _ = Describe("out", func() {
 		BeforeEach(func() {
 			upRequest := fmt.Sprintf(`{
 				"source": {
-					"name": "%-bsr-test-out",
+					"name": "%s-bsr-test-out",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s

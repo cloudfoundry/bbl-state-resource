@@ -33,20 +33,20 @@ func main() {
 
 	storageClient, err := storage.NewStorageClient(inRequest.Source)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to create storage client: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to create storage client: %s\n", err)
 		os.Exit(1)
 	}
 
 	version, err := storageClient.Download(os.Args[1])
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to download bbl state: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to download bbl state: %s\n", err)
 		os.Exit(1)
 	}
 
 	outMap := map[string]concourse.Version{"version": version}
 	err = json.NewEncoder(os.Stdout).Encode(outMap)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to marshal version: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to marshal version: %s\n", err)
 		os.Exit(1)
 	}
 }

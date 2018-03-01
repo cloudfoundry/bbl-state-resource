@@ -46,7 +46,7 @@ func (s Storage) Download(targetDir string) (concourse.Version, error) {
 	}
 	defer reader.Close() // what happens if this errors?
 
-	err = os.MkdirAll(targetDir, 777)
+	err = os.MkdirAll(targetDir, os.ModePerm)
 	if err != nil {
 		return concourse.Version{}, err
 	}

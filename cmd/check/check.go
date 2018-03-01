@@ -25,7 +25,7 @@ func main() {
 
 	storageClient, err := storage.NewStorageClient(checkRequest.Source)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to create storage client: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to create storage client: %s\n", err)
 		os.Exit(1)
 	}
 
@@ -34,14 +34,14 @@ func main() {
 		fmt.Fprintf(os.Stdout, `[]`)
 		os.Exit(0)
 	} else if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to fetch bbl state version: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to fetch bbl state version: %s\n", err)
 		os.Exit(1)
 	}
 
 	outSlice := []concourse.Version{version}
 	err = json.NewEncoder(os.Stdout).Encode(outSlice)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to marshal version: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to marshal version: %s\n", err)
 		os.Exit(1)
 	}
 }

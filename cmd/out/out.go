@@ -35,24 +35,24 @@ func main() {
 
 	storageClient, err := storage.NewStorageClient(outRequest.Source)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to create storage client: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to create storage client: %s\n", err)
 		os.Exit(1)
 	}
 
 	_, err = storageClient.Download(stateDir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to download bbl state: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to download bbl state: %s\n", err)
 		os.Exit(1)
 	}
 
 	bblError := outrunner.RunBBL(outRequest, stateDir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to run bbl command: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to run bbl command: %s\n", err)
 	}
 
 	version, err := storageClient.Upload(stateDir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to upload bbl state: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to upload bbl state: %s\n", err)
 		os.Exit(1)
 	}
 
@@ -61,7 +61,7 @@ func main() {
 	outMap := map[string]concourse.Version{"version": version}
 	err = json.NewEncoder(os.Stdout).Encode(outMap)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to marshal version: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "failed to marshal version: %s\n", err)
 		os.Exit(1)
 	}
 	if bblError != nil {
