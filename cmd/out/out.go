@@ -22,8 +22,6 @@ func main() {
 	}
 	sourcesDir := os.Args[1]
 
-	fmt.Fprintf(os.Stderr, "sourcesDir: %s\n", sourcesDir)
-
 	stdin, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err)
