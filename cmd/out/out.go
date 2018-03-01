@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
 	"github.com/cloudfoundry/bbl-state-resource/outrunner"
@@ -19,7 +20,7 @@ func main() {
 		)
 		os.Exit(1)
 	}
-	stateDir := os.Args[1]
+	sourcesDir := os.Args[1]
 
 	stdin, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
@@ -39,10 +40,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, err = storageClient.Download(stateDir)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to download bbl state: %s\n", err)
-		os.Exit(1)
+	stateDir := outRequest.Params.StateDir
+	if stateDir == "" {
+		stateDir = filepath.Join(sourcesDir, "bbl-state")
+		err = os.Mkdir(stateDir, os.ModePerm)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to create %s directory: %s\n", stateDir, err)
+			os.Exit(1)
+		}
+
+		_, err = storageClient.Download(stateDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to download bbl state: %s\n", err)
+			os.Exit(1)
+		}
 	}
 
 	bblError := outrunner.RunBBL(outRequest, stateDir)

@@ -20,17 +20,17 @@ import (
 var _ = Describe("out", func() {
 	Context("bbl succeeds", func() {
 		var (
-			upTargetDir string
-			upOutInput  *bytes.Buffer
+			upSourcesDir string
+			upOutInput   *bytes.Buffer
 
-			downTargetDir string
-			downOutInput  *bytes.Buffer
+			downSourcesDir string
+			downOutInput   *bytes.Buffer
 		)
 
 		BeforeEach(func() {
 			upRequest := fmt.Sprintf(`{
 				"source": {
-					"name": "%s-bsr-test-out",
+					"name": "bsr-test-out-%s",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s
@@ -41,13 +41,13 @@ var _ = Describe("out", func() {
 			}`, projectId, strconv.Quote(serviceAccountKey))
 
 			var err error
-			upTargetDir, err = ioutil.TempDir("", "up_out_test")
+			upSourcesDir, err = ioutil.TempDir("", "up_out_test")
 			Expect(err).NotTo(HaveOccurred())
 			upOutInput = bytes.NewBuffer([]byte(upRequest))
 
 			downRequest := fmt.Sprintf(`{
 				"source": {
-					"name": "%s-bsr-test-out",
+					"name": "bsr-test-out-%s",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s
@@ -57,33 +57,33 @@ var _ = Describe("out", func() {
 				}
 			}`, projectId, strconv.Quote(serviceAccountKey))
 
-			downTargetDir, err = ioutil.TempDir("", "down_out_test")
+			downSourcesDir, err = ioutil.TempDir("", "down_out_test")
 			Expect(err).NotTo(HaveOccurred())
 			downOutInput = bytes.NewBuffer([]byte(downRequest))
 		})
 
 		AfterEach(func() {
 			By("bbling down", func() {
-				cmd := exec.Command(outBinaryPath, downTargetDir)
+				cmd := exec.Command(outBinaryPath, downSourcesDir)
 				cmd.Stdin = downOutInput
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 40*time.Minute).Should(gexec.Exit(0), "bbl down should've suceeded!")
 				Eventually(session.Out).Should(gbytes.Say(`{"version":{"ref":"[0-9a-f]+"}}`))
-				_, err = os.Stat(filepath.Join(downTargetDir, "bbl-state.json"))
+				_, err = os.Stat(filepath.Join(downSourcesDir, "bbl-state", "bbl-state.json"))
 				Expect(err).To(HaveOccurred())
 			})
 		})
 
 		It("bbls up and down successfully from different dirs configured with the same source", func() {
 			By("bbling up", func() {
-				cmd := exec.Command(outBinaryPath, upTargetDir)
+				cmd := exec.Command(outBinaryPath, upSourcesDir)
 				cmd.Stdin = upOutInput
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 40*time.Minute).Should(gexec.Exit(0), "bbl up should've suceeded!")
 				Eventually(session.Out).Should(gbytes.Say(`{"version":{"ref":"[0-9a-f]+"}}`))
-				_, err = os.Open(filepath.Join(upTargetDir, "bbl-state.json"))
+				_, err = os.Open(filepath.Join(upSourcesDir, "bbl-state", "bbl-state.json"))
 				Expect(err).NotTo(HaveOccurred())
 			})
 		})
@@ -100,7 +100,7 @@ var _ = Describe("out", func() {
 			)
 			badRequest := fmt.Sprintf(`{
 				"source": {
-					"name": "%s-bsr-test-bad",
+					"name": "bsr-test-bad-%s",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s
@@ -132,7 +132,7 @@ var _ = Describe("out", func() {
 			By("getting the resource again", func() {
 				inRequest := fmt.Sprintf(`{
 					"source": {
-						"name": "%s-bsr-test-bad",
+						"name": "bsr-test-bad-%s",
 						"iaas": "gcp",
 						"gcp-region": "us-east1",
 						"gcp-service-account-key": %s

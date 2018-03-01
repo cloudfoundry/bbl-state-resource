@@ -18,8 +18,9 @@ package concourse
 // bbl -n up --iaas=gcp --lb-cert=----some cert----
 
 type OutParams struct {
-	Command string                 `json:"command"`
-	Args    map[string]interface{} `json:"args"`
+	StateDir string                 `json:"state_dir"`
+	Command  string                 `json:"command"`
+	Args     map[string]interface{} `json:"args"`
 }
 
 type UpArgs struct {
