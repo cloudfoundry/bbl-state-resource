@@ -58,7 +58,7 @@ func main() {
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "running 'bbl %s --state-dir=%s'...\n", outRequest.Params.Command, sourcesDir)
+	fmt.Fprintf(os.Stderr, "running 'bbl %s --state-dir=%s'...\n", outRequest.Params.Command, stateDir)
 
 	bblError := outrunner.RunBBL(outRequest, stateDir)
 	if err != nil {
