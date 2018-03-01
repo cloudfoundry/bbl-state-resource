@@ -22,6 +22,8 @@ func main() {
 	}
 	sourcesDir := os.Args[1]
 
+	fmt.Fprintf(os.Stderr, "sourcesDir: %s\n", sourcesDir)
+
 	stdin, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err)
@@ -55,6 +57,8 @@ func main() {
 			os.Exit(1)
 		}
 	}
+
+	fmt.Fprintf(os.Stderr, "running 'bbl %s --state-dir=%s'...\n", outRequest.Params.Command, sourcesDir)
 
 	bblError := outrunner.RunBBL(outRequest, stateDir)
 	if err != nil {
