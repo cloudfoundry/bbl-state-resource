@@ -3,6 +3,7 @@ package outrunner
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	randomdata "github.com/Pallinder/go-randomdata"
@@ -21,6 +22,8 @@ func Name(params concourse.OutParams) (string, error) {
 	}
 
 	if nameFilePath != "" {
+		wd, _ := os.Getwd()
+		fmt.Fprintf(os.Stderr, "cwd: %s, nameFilePath: %s", wd, nameFilePath)
 		name, err := ioutil.ReadFile(nameFilePath)
 		if err != nil {
 			return "", fmt.Errorf("Failure reading name file: %s", err)

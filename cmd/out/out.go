@@ -15,7 +15,7 @@ import (
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr,
-			"not enough args - usage: %s <target directory>\n",
+			"not enough args - usage: %s <sources directory>\n",
 			os.Args[0],
 		)
 		os.Exit(1)
