@@ -32,7 +32,7 @@ var _ = Describe("out", func() {
 			name = fmt.Sprintf("bsr-test-out-%d-%s", GinkgoParallelNode(), projectId)
 			upRequest := fmt.Sprintf(`{
 				"source": {
-					"bucket": "bsr-acceptance-tests",
+					"bucket": "bsr-acc-tests-%s",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s
@@ -41,7 +41,7 @@ var _ = Describe("out", func() {
 					"name": "%s",
 					"command": "up"
 				}
-			}`, strconv.Quote(serviceAccountKey), name)
+			}`, projectId, strconv.Quote(serviceAccountKey), name)
 
 			var err error
 			upSourcesDir, err = ioutil.TempDir("", "up_out_test")
@@ -50,7 +50,7 @@ var _ = Describe("out", func() {
 
 			downRequest := fmt.Sprintf(`{
 				"source": {
-					"bucket": "bsr-acceptance-tests",
+					"bucket": "bsr-acc-tests-%s",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s
@@ -59,7 +59,7 @@ var _ = Describe("out", func() {
 					"name": "%s",
 					"command": "down"
 				}
-			}`, strconv.Quote(serviceAccountKey), name)
+			}`, projectId, strconv.Quote(serviceAccountKey), name)
 
 			downSourcesDir, err = ioutil.TempDir("", "down_out_test")
 			Expect(err).NotTo(HaveOccurred())

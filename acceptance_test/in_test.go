@@ -28,8 +28,9 @@ var _ = Describe("in", func() {
 	)
 
 	BeforeEach(func() {
+		bucket := fmt.Sprintf("bsr-acc-tests-%s", projectId)
 		source := concourse.Source{
-			Bucket:               "bsr-acceptance-tests",
+			Bucket:               bucket,
 			IAAS:                 "gcp",
 			GCPRegion:            "us-east-1",
 			GCPServiceAccountKey: serviceAccountKey,
@@ -42,7 +43,7 @@ var _ = Describe("in", func() {
 		// to violate some abstraction layers to test it here
 		// against the real api
 		name = fmt.Sprintf("bsr-test-in-%d-%s", GinkgoParallelNode(), projectId)
-		client, err := storage.NewStorageClient(serviceAccountKey, name, "bsr-acceptance-tests")
+		client, err := storage.NewStorageClient(serviceAccountKey, name, bucket)
 		Expect(err).NotTo(HaveOccurred())
 
 		By("uploading a bogus bbl state with some unique contents", func() {
