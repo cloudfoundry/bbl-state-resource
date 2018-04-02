@@ -8,6 +8,7 @@ func AppendSourceFlags(flags map[string]interface{}, source concourse.Source) ma
 	}
 	flags["iaas"] = source.IAAS
 	flags["gcp-service-account-key"] = source.GCPServiceAccountKey
+	flags["gcp-region"] = source.GCPRegion
 	if source.LBType != "" {
 		flags["lb-type"] = source.LBType
 	}

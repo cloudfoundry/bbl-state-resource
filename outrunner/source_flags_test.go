@@ -25,6 +25,7 @@ var _ = Describe("AppendSourceFlags", func() {
 			Bucket:               "dont-flaggify-this-bucket!",
 			IAAS:                 "gcp",
 			GCPServiceAccountKey: "some-service-account-key",
+			GCPRegion:            "some-region",
 			LBType:               "cf",
 			LBDomain:             "cf.example.com",
 		}
@@ -32,6 +33,7 @@ var _ = Describe("AppendSourceFlags", func() {
 
 		Expect(flags).To(HaveKeyWithValue("iaas", "gcp"))
 		Expect(flags).To(HaveKeyWithValue("gcp-service-account-key", "some-service-account-key"))
+		Expect(flags).To(HaveKeyWithValue("gcp-region", "some-region"))
 		Expect(flags).To(HaveKeyWithValue("lb-type", "cf"))
 		Expect(flags).To(HaveKeyWithValue("lb-domain", "cf.example.com"))
 		Expect(flags).To(HaveKeyWithValue("lb-cert", "/path/to/lb/cert"))
@@ -45,11 +47,13 @@ var _ = Describe("AppendSourceFlags", func() {
 				Bucket:               "dont-flaggify-this-bucket!",
 				IAAS:                 "gcp",
 				GCPServiceAccountKey: "some-service-account-key",
+				GCPRegion:            "some-region",
 			}
 			flags := outrunner.AppendSourceFlags(yeOldeFlags, source)
 
 			Expect(flags).To(HaveKeyWithValue("iaas", "gcp"))
 			Expect(flags).To(HaveKeyWithValue("gcp-service-account-key", "some-service-account-key"))
+			Expect(flags).To(HaveKeyWithValue("gcp-region", "some-region"))
 			Expect(flags).NotTo(HaveKey("lb-type"))
 			Expect(flags).NotTo(HaveKey("lb-domain"))
 			Expect(flags).To(HaveKeyWithValue("lb-cert", "/path/to/lb/cert"))
