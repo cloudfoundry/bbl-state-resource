@@ -34,14 +34,24 @@ func main() {
 		os.Exit(1)
 	}
 
-	storageClient, err := storage.NewStorageClient(outRequest.Source)
+	name, err := outrunner.Name(outRequest.Params)
+	if err != nil {
+		fmt.Fprint(os.Stderr, err.Error())
+		os.Exit(1)
+	}
+
+	storageClient, err := storage.NewStorageClient(
+		outRequest.Source.GCPServiceAccountKey,
+		name,
+		outRequest.Source.Bucket,
+	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create storage client: %s\n", err)
 		os.Exit(1)
 	}
 
-	stateDir := filepath.Join(sourcesDir, outRequest.Params.StateDir)
-	if outRequest.Params.StateDir == "" {
+	stateDir := outRequest.Params.StateDir
+	if stateDir == "" {
 		stateDir = filepath.Join(sourcesDir, "bbl-state")
 		err = os.Mkdir(stateDir, os.ModePerm)
 		if err != nil {
@@ -56,9 +66,10 @@ func main() {
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "running 'bbl %s --state-dir=%s'...\n", outRequest.Params.Command, stateDir)
+	fmt.Fprintf(os.Stderr, "running something like 'bbl %s --state-dir=%s'...\n", outRequest.Params.Command, stateDir)
 
-	bblError := outrunner.RunBBL(outRequest, stateDir)
+	bblError := outrunner.RunBBL(name, stateDir, outRequest.Params.Command,
+		outrunner.AppendSourceFlags(outRequest.Params.Args, outRequest.Source))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to run bbl command: %s\n", err)
 	}
@@ -71,7 +82,7 @@ func main() {
 
 	fmt.Fprintf(os.Stderr, "successfully uploaded bbl state!\n")
 
-	outMap := map[string]concourse.Version{"version": version}
+	outMap := map[string]storage.Version{"version": version}
 	err = json.NewEncoder(os.Stdout).Encode(outMap)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to marshal version: %s\n", err)

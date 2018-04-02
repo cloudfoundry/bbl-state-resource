@@ -2,12 +2,14 @@ package fakes
 
 import (
 	"io"
+
+	"github.com/cloudfoundry/bbl-state-resource/storage"
 )
 
 type Object struct {
 	VersionCall struct {
 		Returns struct {
-			Version string
+			Version storage.Version
 			Error   error
 		}
 	}
@@ -28,7 +30,7 @@ type Object struct {
 	}
 }
 
-func (g *Object) Version() (string, error) {
+func (g *Object) Version() (storage.Version, error) {
 	return g.VersionCall.Returns.Version, g.VersionCall.Returns.Error
 }
 

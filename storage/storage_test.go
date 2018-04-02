@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/cloudfoundry/bbl-state-resource/fakes"
 	"github.com/cloudfoundry/bbl-state-resource/storage"
@@ -21,6 +22,7 @@ var _ = Describe("Storage", func() {
 		store           storage.Storage
 		fakeTarrer      *fakes.Tarrer
 		fakeObject      *fakes.Object
+		fakeBucket      *fakes.Bucket
 		fakeReadCloser  *fakes.ReadCloser
 		fakeWriteCloser *fakes.WriteCloser
 	)
@@ -34,7 +36,22 @@ var _ = Describe("Storage", func() {
 		fakeObject = &fakes.Object{}
 		fakeObject.NewReaderCall.Returns.ReadCloser = fakeReadCloser
 		fakeObject.NewWriterCall.Returns.WriteCloser = fakeWriteCloser
-		fakeObject.VersionCall.Returns.Version = "fresh-version"
+		fakeObject.VersionCall.Returns.Version = storage.Version{Name: "passionfruit", Ref: "fresh-version", Updated: time.Unix(1, 0)}
+
+		fakeObject2 := &fakes.Object{}
+		fakeObject2.VersionCall.Returns.Version = storage.Version{Name: "kiwi", Ref: "rotten-version", Updated: time.Unix(-1, 0)}
+
+		fakeObject3 := &fakes.Object{}
+		fakeObject3.VersionCall.Returns.Version = storage.Version{Name: "breadfruit", Ref: "fresh-version", Updated: time.Unix(1, 0)}
+
+		fakeObject4 := &fakes.Object{}
+		fakeObject4.VersionCall.Returns.Version = storage.Version{Name: "noni", Ref: "rotten-version", Updated: time.Unix(-1, 0)}
+
+		fakeObject5 := &fakes.Object{}
+		fakeObject5.VersionCall.Returns.Version = storage.Version{Name: "passionfruit", Ref: "ripe-version", Updated: time.Unix(0, 0)}
+
+		fakeBucket = &fakes.Bucket{}
+		fakeBucket.ObjectsCall.Returns.Objects = []storage.Object{fakeObject, fakeObject2, fakeObject3, fakeObject4, fakeObject5}
 
 		By("creating a temporary directory to walk", func() {
 			var err error
@@ -59,6 +76,8 @@ var _ = Describe("Storage", func() {
 		})
 
 		store = storage.Storage{
+			Name:     "passionfruit",
+			Bucket:   fakeBucket,
 			Object:   fakeObject,
 			Archiver: fakeTarrer,
 		}
@@ -207,6 +226,7 @@ var _ = Describe("Storage", func() {
 			version, err := store.Version()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(version.Ref).To(Equal("fresh-version"))
+			Expect(version.Name).To(Equal("passionfruit"))
 		})
 
 		Context("when the underlying object errors", func() {
@@ -217,6 +237,45 @@ var _ = Describe("Storage", func() {
 			It("returns the error", func() {
 				_, err := store.Version()
 				Expect(err).To(MatchError("mango"))
+			})
+		})
+	})
+
+	Describe("GetAllNewerVersions", func() {
+		var version storage.Version
+		BeforeEach(func() {
+			version = storage.Version{Name: "passionfruit", Ref: "old-version", Updated: time.Unix(0, 0)}
+		})
+
+		It("returns the versions for each newer object in the bucket", func() {
+			versions, err := store.GetAllNewerVersions(version)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(versions).To(ConsistOf([]storage.Version{
+				{Name: "passionfruit", Ref: "fresh-version", Updated: time.Unix(1, 0)},
+				{Name: "breadfruit", Ref: "fresh-version", Updated: time.Unix(1, 0)},
+				{Name: "passionfruit", Ref: "ripe-version", Updated: time.Unix(0, 0)},
+			}))
+		})
+
+		Context("when we fail to list buckets", func() {
+			BeforeEach(func() {
+				fakeBucket.ObjectsCall.Returns.Error = errors.New("durian")
+			})
+
+			It("returns the error", func() {
+				_, err := store.GetAllNewerVersions(version)
+				Expect(err).To(MatchError("durian"))
+			})
+		})
+
+		Context("when we fail to query an object's version", func() {
+			BeforeEach(func() {
+				fakeBucket.ObjectsCall.Returns.Error = errors.New("durian")
+			})
+
+			It("returns the error", func() {
+				_, err := store.GetAllNewerVersions(version)
+				Expect(err).To(MatchError("durian"))
 			})
 		})
 	})

@@ -10,6 +10,7 @@ import (
 	gcs "cloud.google.com/go/storage"
 	"github.com/mholt/archiver"
 	oauthgoogle "golang.org/x/oauth2/google"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
@@ -18,15 +19,15 @@ type objectHandleWrapper struct {
 	objectHandle *gcs.ObjectHandle
 }
 
-func (o objectHandleWrapper) Version() (string, error) {
+func (o objectHandleWrapper) Version() (Version, error) {
 	r, err := o.objectHandle.Attrs(context.Background())
 	if err == gcs.ErrObjectNotExist {
-		return "", ObjectNotFoundError
+		return Version{}, ObjectNotFoundError
 	} else if err != nil {
-		return "", err
+		return Version{}, err
 	}
 
-	return hex.EncodeToString(r.MD5), nil
+	return Version{Name: r.Name, Ref: hex.EncodeToString(r.MD5), Updated: r.Updated}, nil
 }
 
 func (o objectHandleWrapper) NewReader() (io.ReadCloser, error) {
@@ -41,7 +42,48 @@ func (o objectHandleWrapper) NewWriter() io.WriteCloser {
 	return o.objectHandle.NewWriter(context.Background())
 }
 
-func NewGCSStorage(serviceAccountKey string, bucketName string) (Storage, error) {
+type bucketHandleWrapper struct {
+	bucketHandle *gcs.BucketHandle
+}
+
+func (b bucketHandleWrapper) GetAllObjects() ([]Object, error) {
+	objectIter := b.bucketHandle.Objects(context.Background(), nil)
+
+	var objects []Object
+	for {
+		next, err := objectIter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		handle := objectHandleWrapper{objectHandle: b.bucketHandle.Object(next.Name)}
+		objects = append(objects, handle)
+	}
+	return objects, nil
+}
+
+func (b bucketHandleWrapper) Delete() error {
+	objectIter := b.bucketHandle.Objects(context.Background(), nil)
+
+	for {
+		next, err := objectIter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		err = b.bucketHandle.Object(next.Name).Delete(context.Background())
+		if err != nil {
+			return err
+		}
+	}
+	return b.bucketHandle.Delete(context.Background())
+}
+
+func NewGCSStorage(serviceAccountKey, objectName, bucketName string) (Storage, error) {
 	storageJwtConf, err := oauthgoogle.JWTConfigFromJSON([]byte(serviceAccountKey), gcs.ScopeReadWrite)
 	if err != nil {
 		return Storage{}, fmt.Errorf("failed to form JWT config from GCP storage account key: %s", err)
@@ -69,9 +111,13 @@ func NewGCSStorage(serviceAccountKey string, bucketName string) (Storage, error)
 		return Storage{}, fmt.Errorf("failed to get bucket: %s", err)
 	}
 
-	object := bucket.Object("bbl-state.tar.gz")
+	object := bucket.Object(objectName)
 
 	return Storage{
+		Name: objectName,
+		Bucket: bucketHandleWrapper{
+			bucketHandle: bucket,
+		},
 		Object: objectHandleWrapper{
 			objectHandle: object,
 		},

@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+
+	"github.com/cloudfoundry/bbl-state-resource/storage"
 )
 
 type InRequest struct {
-	Source  Source  `json:"source"`
-	Version Version `json:"version"`
+	Source  Source          `json:"source"`
+	Params  InParams        `json:"params"`
+	Version storage.Version `json:"version"`
 }
 
 func NewInRequest(request []byte) (InRequest, error) {

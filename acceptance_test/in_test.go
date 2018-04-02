@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
 	"github.com/cloudfoundry/bbl-state-resource/storage"
@@ -21,29 +20,29 @@ import (
 var _ = Describe("in", func() {
 	var (
 		targetDir        string
-		version          concourse.Version
+		version          storage.Version
 		bblStateContents string
 		inInput          *bytes.Buffer
+		marshalledSource []byte
+		name             string
 	)
 
 	BeforeEach(func() {
-		inRequest := fmt.Sprintf(`{
-			"source": {
-				"name": "bsr-test-in-%s",
-				"iaas": "gcp",
-				"gcp-region": "us-east1",
-				"gcp-service-account-key": %s
-			},
-			"version": {"ref": "the-greatest"}
-		}`, projectId, strconv.Quote(serviceAccountKey))
-
-		var req concourse.InRequest
-		err := json.Unmarshal([]byte(inRequest), &req)
+		source := concourse.Source{
+			Bucket:               "bsr-acceptance-tests",
+			IAAS:                 "gcp",
+			GCPRegion:            "us-east-1",
+			GCPServiceAccountKey: serviceAccountKey,
+		}
+		var err error
+		marshalledSource, err = json.Marshal(source)
 		Expect(err).NotTo(HaveOccurred())
+
 		// this client isn't well tested, so we're going
 		// to violate some abstraction layers to test it here
 		// against the real api
-		client, err := storage.NewStorageClient(req.Source)
+		name = fmt.Sprintf("bsr-test-in-%d-%s", GinkgoParallelNode(), projectId)
+		client, err := storage.NewStorageClient(serviceAccountKey, name, "bsr-acceptance-tests")
 		Expect(err).NotTo(HaveOccurred())
 
 		By("uploading a bogus bbl state with some unique contents", func() {
@@ -64,19 +63,30 @@ var _ = Describe("in", func() {
 
 		targetDir, err = ioutil.TempDir("", "in_test")
 		Expect(err).NotTo(HaveOccurred())
-
-		inInput = bytes.NewBuffer([]byte(inRequest))
 	})
 
-	It("downloads the latest specified version of the resource", func() {
-		cmd := exec.Command(inBinaryPath, targetDir)
-		cmd.Stdin = inInput
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-		Eventually(session, 10).Should(gexec.Exit(0))
-		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`{"version":{"ref":"%s"}}`, version.Ref)))
-		f, err := os.Open(filepath.Join(targetDir, "bbl-state.json"))
-		Expect(err).NotTo(HaveOccurred())
-		Eventually(gbytes.BufferReader(f)).Should(gbytes.Say(bblStateContents))
+	Context("when name is provided via the version", func() {
+		BeforeEach(func() {
+			inInput = bytes.NewBuffer([]byte(fmt.Sprintf(`{
+				"source": %s,
+				"params": {},
+				"version": {
+					"name": "%s",
+					"ref": "the-greatest"
+				}
+			}`, marshalledSource, name)))
+		})
+
+		It("downloads the latest specified version of the resource", func() {
+			cmd := exec.Command(inBinaryPath, targetDir)
+			cmd.Stdin = inInput
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, 10).Should(gexec.Exit(0))
+			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`{"version":{"name":"%s","ref":"%s","updated":".+"}}`, name, version.Ref)))
+			f, err := os.Open(filepath.Join(targetDir, "bbl-state.json"))
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(gbytes.BufferReader(f)).Should(gbytes.Say(bblStateContents))
+		})
 	})
 })

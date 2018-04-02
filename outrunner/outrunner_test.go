@@ -1,6 +1,9 @@
 package outrunner_test
 
 import (
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"strconv"
 
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
@@ -15,16 +18,19 @@ var _ = Describe("Run", func() {
 	var (
 		commandRunner *fakes.CommandRunner
 		outRequest    concourse.OutRequest
+		stateDir      string
 	)
 
 	BeforeEach(func() {
 		commandRunner = &fakes.CommandRunner{}
+		var err error
+		stateDir, err = ioutil.TempDir("", "")
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	It("runs bbl up with the appropriate inputs", func() {
 		outRequest = concourse.OutRequest{
 			Source: concourse.Source{
-				Name:                 "some-env-name",
 				IAAS:                 "some-iaas",
 				LBType:               "some-lb-type",
 				LBDomain:             "some-lb-domain",
@@ -40,28 +46,26 @@ var _ = Describe("Run", func() {
 			},
 		}
 
-		err := outrunner.RunInjected(commandRunner, outRequest, "some-state-dir")
+		err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, outRequest.Params.Command, outRequest.Params.Args)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(commandRunner.RunCall.Receives.Command).To(Equal("up"))
 		Expect(commandRunner.RunCall.Receives.Args).To(ConsistOf(
 			"--name=some-env-name",
-			"--lb-type=some-lb-type",
-			"--lb-domain=some-lb-domain",
 			"--lb-cert=some-lb-cert",
 			"--lb-key=some-lb-key",
-			`--gcp-service-account-key="{\"some-json\": \"object\"}"`,
-			"--gcp-region=some-region",
-			"--iaas=some-iaas",
-			"--state-dir=some-state-dir",
+			fmt.Sprintf("--state-dir=%s", stateDir),
 		))
+
+		contents, err := ioutil.ReadFile(filepath.Join(stateDir, "name"))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(string(contents)).To(ContainSubstring("some-env-name"))
 	})
 
 	Context("without optional args", func() {
 		It("omits the corresponding flags", func() {
 			outRequest = concourse.OutRequest{
 				Source: concourse.Source{
-					Name:                 "some-env-name",
 					IAAS:                 "some-iaas",
 					GCPServiceAccountKey: strconv.Quote(`{"some-json": "object"}`),
 					GCPRegion:            "some-region",
@@ -71,16 +75,13 @@ var _ = Describe("Run", func() {
 					Args:    structs.Map(concourse.UpArgs{}),
 				},
 			}
-			err := outrunner.RunInjected(commandRunner, outRequest, "some-state-dir")
+			err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, outRequest.Params.Command, outRequest.Params.Args)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(commandRunner.RunCall.Receives.Command).To(Equal("up"))
 			Expect(commandRunner.RunCall.Receives.Args).To(ConsistOf(
 				"--name=some-env-name",
-				`--gcp-service-account-key="{\"some-json\": \"object\"}"`,
-				"--gcp-region=some-region",
-				"--iaas=some-iaas",
-				"--state-dir=some-state-dir",
+				fmt.Sprintf("--state-dir=%s", stateDir),
 			))
 		})
 	})

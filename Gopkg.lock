@@ -3,38 +3,20 @@
 
 [[projects]]
   name = "cloud.google.com/go"
-  packages = [
-    "compute/metadata",
-    "iam",
-    "internal",
-    "internal/optional",
-    "internal/version",
-    "storage"
-  ]
+  packages = ["compute/metadata","iam","internal","internal/optional","internal/version","storage"]
   revision = "767c40d6a2e058483c25fa193e963a22da17236d"
   version = "v0.18.0"
 
 [[projects]]
-  name = "github.com/cloudfoundry/bosh-deployment-resource"
-  packages = [
-    "concourse",
-    "gcp",
-    "storage"
-  ]
-  revision = "8984261f004ade9913c1c96a04438ec1ec819bc1"
-  version = "v2.9.0"
+  branch = "master"
+  name = "github.com/Pallinder/go-randomdata"
+  packages = ["."]
+  revision = "dab270d296c6c8fb98de3b4334bbd7d7b0ceca53"
 
 [[projects]]
   branch = "master"
   name = "github.com/dsnet/compress"
-  packages = [
-    ".",
-    "bzip2",
-    "bzip2/internal/sais",
-    "internal",
-    "internal/errors",
-    "internal/prefix"
-  ]
+  packages = [".","bzip2","bzip2/internal/sais","internal","internal/errors","internal/prefix"]
   revision = "cc9eb1d7ad760af14e8f918698f745e80377af4f"
 
 [[projects]]
@@ -45,14 +27,7 @@
 
 [[projects]]
   name = "github.com/golang/protobuf"
-  packages = [
-    "proto",
-    "protoc-gen-go/descriptor",
-    "ptypes",
-    "ptypes/any",
-    "ptypes/duration",
-    "ptypes/timestamp"
-  ]
+  packages = ["proto","protoc-gen-go/descriptor","ptypes","ptypes/any","ptypes/duration","ptypes/timestamp"]
   revision = "925541529c1fa6821df4e44ce2723319eb2be768"
   version = "v1.0.0"
 
@@ -82,47 +57,13 @@
 
 [[projects]]
   name = "github.com/onsi/ginkgo"
-  packages = [
-    ".",
-    "config",
-    "internal/codelocation",
-    "internal/containernode",
-    "internal/failer",
-    "internal/leafnodes",
-    "internal/remote",
-    "internal/spec",
-    "internal/spec_iterator",
-    "internal/specrunner",
-    "internal/suite",
-    "internal/testingtproxy",
-    "internal/writer",
-    "reporters",
-    "reporters/stenographer",
-    "reporters/stenographer/support/go-colorable",
-    "reporters/stenographer/support/go-isatty",
-    "types"
-  ]
+  packages = [".","config","internal/codelocation","internal/containernode","internal/failer","internal/leafnodes","internal/remote","internal/spec","internal/spec_iterator","internal/specrunner","internal/suite","internal/testingtproxy","internal/writer","reporters","reporters/stenographer","reporters/stenographer/support/go-colorable","reporters/stenographer/support/go-isatty","types"]
   revision = "9eda700730cba42af70d53180f9dcce9266bc2bc"
   version = "v1.4.0"
 
 [[projects]]
   name = "github.com/onsi/gomega"
-  packages = [
-    ".",
-    "format",
-    "gbytes",
-    "gexec",
-    "internal/assertion",
-    "internal/asyncassertion",
-    "internal/oraclematcher",
-    "internal/testingtsupport",
-    "matchers",
-    "matchers/support/goraph/bipartitegraph",
-    "matchers/support/goraph/edge",
-    "matchers/support/goraph/node",
-    "matchers/support/goraph/util",
-    "types"
-  ]
+  packages = [".","format","gbytes","gexec","internal/assertion","internal/asyncassertion","internal/oraclematcher","internal/testingtsupport","matchers","matchers/support/goraph/bipartitegraph","matchers/support/goraph/edge","matchers/support/goraph/node","matchers/support/goraph/util","types"]
   revision = "003f63b7f4cff3fc95357005358af2de0f5fe152"
   version = "v1.3.0"
 
@@ -140,43 +81,20 @@
 
 [[projects]]
   name = "github.com/ulikunitz/xz"
-  packages = [
-    ".",
-    "internal/hash",
-    "internal/xlog",
-    "lzma"
-  ]
+  packages = [".","internal/hash","internal/xlog","lzma"]
   revision = "0c6b41e72360850ca4f98dc341fd999726ea007f"
   version = "v0.5.4"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = [
-    "context",
-    "context/ctxhttp",
-    "html",
-    "html/atom",
-    "html/charset",
-    "http2",
-    "http2/hpack",
-    "idna",
-    "internal/timeseries",
-    "lex/httplex",
-    "trace"
-  ]
+  packages = ["context","context/ctxhttp","html","html/atom","html/charset","http2","http2/hpack","idna","internal/timeseries","lex/httplex","trace"]
   revision = "f5dfe339be1d06f81b22525fe34671ee7d2c8904"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/oauth2"
-  packages = [
-    ".",
-    "google",
-    "internal",
-    "jws",
-    "jwt"
-  ]
+  packages = [".","google","internal","jws","jwt"]
   revision = "543e37812f10c46c622c9575afd7ad22f22a12ba"
 
 [[projects]]
@@ -188,105 +106,30 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
-  packages = [
-    "collate",
-    "collate/build",
-    "encoding",
-    "encoding/charmap",
-    "encoding/htmlindex",
-    "encoding/internal",
-    "encoding/internal/identifier",
-    "encoding/japanese",
-    "encoding/korean",
-    "encoding/simplifiedchinese",
-    "encoding/traditionalchinese",
-    "encoding/unicode",
-    "internal/colltab",
-    "internal/gen",
-    "internal/tag",
-    "internal/triegen",
-    "internal/ucd",
-    "internal/utf8internal",
-    "language",
-    "runes",
-    "secure/bidirule",
-    "transform",
-    "unicode/bidi",
-    "unicode/cldr",
-    "unicode/norm",
-    "unicode/rangetable"
-  ]
+  packages = ["collate","collate/build","encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/colltab","internal/gen","internal/tag","internal/triegen","internal/ucd","internal/utf8internal","language","runes","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
   revision = "4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1"
 
 [[projects]]
   branch = "master"
   name = "google.golang.org/api"
-  packages = [
-    "gensupport",
-    "googleapi",
-    "googleapi/internal/uritemplates",
-    "googleapi/transport",
-    "internal",
-    "iterator",
-    "option",
-    "storage/v1",
-    "transport/http"
-  ]
+  packages = ["gensupport","googleapi","googleapi/internal/uritemplates","googleapi/transport","internal","iterator","option","storage/v1","transport/http"]
   revision = "b0284fdf28b5e4d7c9aa5c26e67035437f711304"
 
 [[projects]]
   name = "google.golang.org/appengine"
-  packages = [
-    ".",
-    "internal",
-    "internal/app_identity",
-    "internal/base",
-    "internal/datastore",
-    "internal/log",
-    "internal/modules",
-    "internal/remote_api",
-    "internal/urlfetch",
-    "urlfetch"
-  ]
+  packages = [".","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api","internal/urlfetch","urlfetch"]
   revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
   version = "v1.0.0"
 
 [[projects]]
   branch = "master"
   name = "google.golang.org/genproto"
-  packages = [
-    "googleapis/api/annotations",
-    "googleapis/iam/v1",
-    "googleapis/rpc/status"
-  ]
+  packages = ["googleapis/api/annotations","googleapis/iam/v1","googleapis/rpc/status"]
   revision = "2b5a72b8730b0b16380010cfe5286c42108d88e7"
 
 [[projects]]
   name = "google.golang.org/grpc"
-  packages = [
-    ".",
-    "balancer",
-    "balancer/base",
-    "balancer/roundrobin",
-    "codes",
-    "connectivity",
-    "credentials",
-    "encoding",
-    "grpclb/grpc_lb_v1/messages",
-    "grpclog",
-    "internal",
-    "keepalive",
-    "metadata",
-    "naming",
-    "peer",
-    "resolver",
-    "resolver/dns",
-    "resolver/passthrough",
-    "stats",
-    "status",
-    "tap",
-    "transport"
-  ]
+  packages = [".","balancer","balancer/base","balancer/roundrobin","codes","connectivity","credentials","encoding","grpclb/grpc_lb_v1/messages","grpclog","internal","keepalive","metadata","naming","peer","resolver","resolver/dns","resolver/passthrough","stats","status","tap","transport"]
   revision = "6b51017f791ae1cfbec89c52efdf444b13b550ef"
   version = "v1.9.2"
 
@@ -299,6 +142,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4be35b8a32f72484e39b66062b229ef8866ab5497df16f9c079d9a56cbafd90e"
+  inputs-digest = "1341cb823172accc85230d7e24a5d43431aba562ff92e02b5b6e0fe02384bdf2"
   solver-name = "gps-cdcl"
   solver-version = 1

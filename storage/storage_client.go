@@ -1,15 +1,13 @@
 package storage
 
-import (
-	"github.com/cloudfoundry/bbl-state-resource/concourse"
-)
-
 type StorageClient interface {
-	Download(filePath string) (concourse.Version, error)
-	Upload(filePath string) (concourse.Version, error)
-	Version() (concourse.Version, error)
+	Download(filePath string) (Version, error)
+	Upload(filePath string) (Version, error)
+	Version() (Version, error)
+	GetAllNewerVersions(watermark Version) ([]Version, error)
+	DeleteBucket() error // test cleanup only
 }
 
-func NewStorageClient(source concourse.Source) (StorageClient, error) {
-	return NewGCSStorage(source.GCPServiceAccountKey, source.Name)
+func NewStorageClient(gcpServiceAccountKey, objectName, bucketName string) (StorageClient, error) {
+	return NewGCSStorage(gcpServiceAccountKey, objectName, bucketName)
 }

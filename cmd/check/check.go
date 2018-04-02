@@ -23,13 +23,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	storageClient, err := storage.NewStorageClient(checkRequest.Source)
+	storageClient, err := storage.NewStorageClient(
+		checkRequest.Source.GCPServiceAccountKey,
+		checkRequest.Version.Name,
+		checkRequest.Source.Bucket,
+	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create storage client: %s\n", err)
 		os.Exit(1)
 	}
 
-	version, err := storageClient.Version()
+	versions, err := storageClient.GetAllNewerVersions(checkRequest.Version)
 	if err == storage.ObjectNotFoundError {
 		fmt.Fprintf(os.Stdout, `[]`)
 		os.Exit(0)
@@ -38,8 +42,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	outSlice := []concourse.Version{version}
-	err = json.NewEncoder(os.Stdout).Encode(outSlice)
+	err = json.NewEncoder(os.Stdout).Encode(versions)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to marshal version: %s\n", err)
 		os.Exit(1)

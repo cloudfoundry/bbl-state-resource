@@ -1,8 +1,8 @@
 package concourse
 
 type Source struct {
-	Name string `json:"name,omitempty" yaml:"name" structs:"name,omitempty"`
-	IAAS string `json:"iaas,omitempty" yaml:"iaas" structs:"iaas,omitempty"`
+	Bucket string `json:"bucket,omitempty" yaml:"bucket" structs:"bucket,omitempty"`
+	IAAS   string `json:"iaas,omitempty" yaml:"iaas" structs:"iaas,omitempty"`
 
 	LBType   string `json:"lb-type,omitempty" yaml:"lb-type" structs:"lb-type,omitempty"`
 	LBDomain string `json:"lb-domain,omitempty" yaml:"lb-domain" structs:"lb-domain,omitempty"`

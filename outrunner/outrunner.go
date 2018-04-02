@@ -2,34 +2,41 @@ package outrunner
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
-
-	"github.com/cloudfoundry/bbl-state-resource/concourse"
-	"github.com/fatih/structs"
+	"path/filepath"
 )
 
-func RunBBL(outRequest concourse.OutRequest, bblStateDir string) error {
-	return RunInjected(bblRunner, outRequest, bblStateDir)
+func RunBBL(name, stateDir, command string, flags map[string]interface{}) error {
+	return RunInjected(bblRunner, name, stateDir, command, flags)
 }
 
-func RunInjected(r commandRunner, outRequest concourse.OutRequest, bblStateDir string) error {
+func RunInjected(r commandRunner,
+	name, stateDir, command string, flags map[string]interface{},
+) error {
 	args := []string{}
 	addArg := func(key string, value interface{}) {
 		args = append(args, fmt.Sprintf("--%s=%s", key, value))
 	}
 
-	for key, value := range structs.Map(outRequest.Source) {
+	addArg("name", name)
+	addArg("state-dir", stateDir)
+
+	for key, value := range flags {
 		addArg(key, value)
 	}
 
-	for key, value := range outRequest.Params.Args {
-		addArg(key, value)
+	err := ioutil.WriteFile(
+		filepath.Join(stateDir, "name"),
+		[]byte(name),
+		os.ModePerm,
+	)
+	if err != nil {
+		return err
 	}
 
-	addArg("state-dir", bblStateDir)
-
-	return r.Run(outRequest.Params.Command, args)
+	return r.Run(command, args)
 }
 
 type commandRunner interface {

@@ -9,15 +9,18 @@ package concourse
 //         IAAS: "gcp",
 //     },
 //     Params: OutParams{
+//          Name: "some-env-name",
 //     		Command: "up",
 //          Args: map[string]string{"lb-cert": "----some cert----"},
 //     },
 // }
 // ```
 // will exec:
-// bbl -n up --iaas=gcp --lb-cert=----some cert----
+// bbl -n up --iaas=gcp --name some-env-name --lb-cert=----some cert----
 
 type OutParams struct {
+	Name     string                 `json:"name"`
+	NameFile string                 `json:"name_file"`
 	StateDir string                 `json:"state_dir"`
 	Command  string                 `json:"command"`
 	Args     map[string]interface{} `json:"args"`

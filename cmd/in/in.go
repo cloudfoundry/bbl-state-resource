@@ -31,7 +31,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	storageClient, err := storage.NewStorageClient(inRequest.Source)
+	// versions encode env names, but they can be overridden.
+	// if you provide an env config, you will not necessarily fetch
+	// the version that concourse has provided.
+	storageClient, err := storage.NewStorageClient(
+		inRequest.Source.GCPServiceAccountKey,
+		inRequest.Version.Name,
+		inRequest.Source.Bucket,
+	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create storage client: %s\n", err)
 		os.Exit(1)
@@ -43,7 +50,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	outMap := map[string]concourse.Version{"version": version}
+	outMap := map[string]storage.Version{"version": version}
 	err = json.NewEncoder(os.Stdout).Encode(outMap)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to marshal version: %s\n", err)
