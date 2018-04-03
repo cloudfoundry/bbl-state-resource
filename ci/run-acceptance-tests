@@ -10,6 +10,6 @@ pushd "${GOPATH}/src/github.com/cloudfoundry" > /dev/null
   ln -s "${ROOT}/bbl-state-resource-src" bbl-state-resource
 
   pushd bbl-state-resource > /dev/null
-    ginkgo -r -p -race -randomizeAllSpecs -v acceptance_test
+    scripts/acceptance-test
   popd > /dev/null
 popd > /dev/null
