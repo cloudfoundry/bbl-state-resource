@@ -50,8 +50,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	stateDir := outRequest.Params.StateDir
-	if stateDir == "" {
+	stateDir := filepath.Join(sourcesDir, outRequest.Params.StateDir)
+	if outRequest.Params.StateDir == "" {
 		stateDir = filepath.Join(sourcesDir, "bbl-state")
 		err = os.Mkdir(stateDir, os.ModePerm)
 		if err != nil {
