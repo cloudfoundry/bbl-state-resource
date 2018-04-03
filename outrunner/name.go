@@ -3,7 +3,6 @@ package outrunner
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	randomdata "github.com/Pallinder/go-randomdata"
@@ -11,7 +10,7 @@ import (
 )
 
 // Params.Name > Params.Namefile > Params.StateDir/name > random
-func Name(params concourse.OutParams) (string, error) {
+func Name(sourcesDir string, params concourse.OutParams) (string, error) {
 	if params.Name != "" {
 		return params.Name, nil
 	}
@@ -22,9 +21,7 @@ func Name(params concourse.OutParams) (string, error) {
 	}
 
 	if nameFilePath != "" {
-		wd, _ := os.Getwd()
-		fmt.Fprintf(os.Stderr, "cwd: %s, nameFilePath: %s", wd, nameFilePath)
-		name, err := ioutil.ReadFile(nameFilePath)
+		name, err := ioutil.ReadFile(filepath.Join(sourcesDir, nameFilePath))
 		if err != nil {
 			return "", fmt.Errorf("Failure reading name file: %s", err)
 		}

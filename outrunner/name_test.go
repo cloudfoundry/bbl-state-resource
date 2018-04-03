@@ -14,8 +14,8 @@ import (
 var _ = Describe("Name", func() {
 	Context("when passed empty params", func() {
 		It("generates a random name", func() {
-			name, err1 := outrunner.Name(concourse.OutParams{})
-			name2, err2 := outrunner.Name(concourse.OutParams{})
+			name, err1 := outrunner.Name("", concourse.OutParams{})
+			name2, err2 := outrunner.Name("", concourse.OutParams{})
 
 			Expect(err1).NotTo(HaveOccurred())
 			Expect(err2).NotTo(HaveOccurred())
@@ -26,7 +26,7 @@ var _ = Describe("Name", func() {
 
 	Context("when passed a name", func() {
 		It("returns the name", func() {
-			name, err := outrunner.Name(concourse.OutParams{Name: "some-env-name", NameFile: "ignore-the-name-file", StateDir: "ignore-the-state-dir"})
+			name, err := outrunner.Name("", concourse.OutParams{Name: "some-env-name", NameFile: "ignore-the-name-file", StateDir: "ignore-the-state-dir"})
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(name).To(Equal("some-env-name"))
@@ -35,19 +35,20 @@ var _ = Describe("Name", func() {
 
 	Context("when passed a name file", func() {
 		Context("success", func() {
-			var nameFilePath string
+			var tempDir string
 			BeforeEach(func() {
-				tempDir, err := ioutil.TempDir("", "")
+				var err error
+				tempDir, err = ioutil.TempDir("", "")
 				Expect(err).NotTo(HaveOccurred())
 
-				nameFilePath = filepath.Join(tempDir, "name-file")
+				nameFilePath := filepath.Join(tempDir, "name-file")
 
 				err = ioutil.WriteFile(nameFilePath, []byte("some-env-name"), os.ModePerm)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
 			It("returns the name in the name file", func() {
-				name, err := outrunner.Name(concourse.OutParams{NameFile: nameFilePath, StateDir: "ignore-the-state-dir"})
+				name, err := outrunner.Name(tempDir, concourse.OutParams{NameFile: "name-file", StateDir: "ignore-the-state-dir"})
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(name).To(Equal("some-env-name"))
@@ -56,7 +57,7 @@ var _ = Describe("Name", func() {
 
 		Context("failure", func() {
 			It("returns an error", func() {
-				_, err := outrunner.Name(concourse.OutParams{NameFile: "not-a-real-file"})
+				_, err := outrunner.Name("", concourse.OutParams{NameFile: "not-a-real-file"})
 				Expect(err).To(MatchError("Failure reading name file: open not-a-real-file: no such file or directory"))
 			})
 		})
@@ -78,7 +79,7 @@ var _ = Describe("Name", func() {
 			})
 
 			It("returns the name in the name file", func() {
-				name, err := outrunner.Name(concourse.OutParams{StateDir: tempDir})
+				name, err := outrunner.Name(tempDir, concourse.OutParams{StateDir: "."})
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(name).To(Equal("some-env-name"))
@@ -87,7 +88,7 @@ var _ = Describe("Name", func() {
 
 		Context("failure", func() {
 			It("returns an error", func() {
-				_, err := outrunner.Name(concourse.OutParams{StateDir: "not-a-real-dir"})
+				_, err := outrunner.Name("", concourse.OutParams{StateDir: "not-a-real-dir"})
 				Expect(err).To(MatchError("Failure reading name file: open not-a-real-dir/name: no such file or directory"))
 			})
 		})

@@ -34,7 +34,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	name, err := outrunner.Name(outRequest.Params)
+	name, err := outrunner.Name(sourcesDir, outRequest.Params)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err.Error())
 		os.Exit(1)
