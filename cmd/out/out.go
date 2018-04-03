@@ -70,7 +70,7 @@ func main() {
 
 	bblError := outrunner.RunBBL(name, stateDir, outRequest.Params.Command,
 		outrunner.AppendSourceFlags(outRequest.Params.Args, outRequest.Source))
-	if err != nil {
+	if bblError != nil {
 		fmt.Fprintf(os.Stderr, "failed to run bbl command: %s\n", err)
 	}
 
