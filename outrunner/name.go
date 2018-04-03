@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	randomdata "github.com/Pallinder/go-randomdata"
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
@@ -25,7 +26,7 @@ func Name(sourcesDir string, params concourse.OutParams) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("Failure reading name file: %s", err)
 		}
-		return string(name), nil
+		return strings.TrimSpace(string(name)), nil
 	}
 
 	return fmt.Sprintf("%s-%s", randomdata.Adjective(), randomdata.Noun()), nil
