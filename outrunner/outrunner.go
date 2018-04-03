@@ -27,6 +27,15 @@ func RunInjected(r commandRunner,
 		addArg(key, value)
 	}
 
+	err := writeInteropFiles(stateDir, name)
+	if err != nil {
+		return err
+	}
+
+	return r.Run(command, args)
+}
+
+func writeInteropFiles(stateDir, name string) error {
 	err := ioutil.WriteFile(
 		filepath.Join(stateDir, "name"),
 		[]byte(name),
@@ -35,8 +44,11 @@ func RunInjected(r commandRunner,
 	if err != nil {
 		return err
 	}
-
-	return r.Run(command, args)
+	return ioutil.WriteFile(
+		filepath.Join(stateDir, "metadata"),
+		[]byte(name),
+		os.ModePerm,
+	)
 }
 
 type commandRunner interface {

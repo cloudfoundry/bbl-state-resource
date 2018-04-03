@@ -60,6 +60,10 @@ var _ = Describe("Run", func() {
 		contents, err := ioutil.ReadFile(filepath.Join(stateDir, "name"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(string(contents)).To(ContainSubstring("some-env-name"))
+
+		contents, err = ioutil.ReadFile(filepath.Join(stateDir, "metadata"))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(string(contents)).To(ContainSubstring("some-env-name"))
 	})
 
 	Context("without optional args", func() {
