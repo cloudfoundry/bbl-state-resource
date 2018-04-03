@@ -30,7 +30,7 @@ var _ = Describe("check", func() {
 		)
 
 		buildStorageClient := func(envName string) storage.StorageClient {
-			bucketName := fmt.Sprintf("bsr-check-test-%d", GinkgoParallelNode())
+			bucketName := fmt.Sprintf("bsr-check-test-%d-%s", GinkgoParallelNode(), projectId)
 			source := concourse.Source{
 				Bucket:               bucketName,
 				IAAS:                 "gcp",
@@ -71,7 +71,7 @@ var _ = Describe("check", func() {
 		}
 
 		BeforeEach(func() {
-			name = fmt.Sprintf("a-bsr-test-check-%d-%s", GinkgoParallelNode(), projectId)
+			name = "a-bsr-test-check"
 			version = uploadBogusState(name)
 			timestamp = version.Updated.Format(time.RFC3339Nano)
 		})
@@ -111,17 +111,16 @@ var _ = Describe("check", func() {
 				newerTimestamp string
 			)
 			BeforeEach(func() {
-				newerName = fmt.Sprintf("b-bsr-test-check-%d-%s", GinkgoParallelNode(), projectId)
+				newerName = "b-bsr-test-check"
 				newerVersion = uploadBogusState(newerName)
 				newerTimestamp = newerVersion.Updated.Format(time.RFC3339Nano)
 			})
 
 			AfterEach(func() {
-				err := buildStorageClient(name).DeleteBucket()
-				Expect(err).NotTo(HaveOccurred())
+				_ = buildStorageClient(newerName).DeleteBucket()
 			})
 
-			It("prints the latest version of each environment", func() {
+			It("prints version for environments as new or newer than the version in the checkRequest", func() {
 				checkRequest := fmt.Sprintf(`{
 					"source": %s,
 					"version": {

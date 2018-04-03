@@ -23,7 +23,8 @@ func (o objectHandleWrapper) Version() (Version, error) {
 	r, err := o.objectHandle.Attrs(context.Background())
 	if err == gcs.ErrObjectNotExist {
 		return Version{}, ObjectNotFoundError
-	} else if err != nil {
+	}
+	if err != nil {
 		return Version{}, err
 	}
 
@@ -105,10 +106,13 @@ func NewGCSStorage(serviceAccountKey, objectName, bucketName string) (Storage, e
 	bucket := storageClient.Bucket(bucketName).UserProject(p.ProjectId)
 
 	_, err = bucket.Attrs(ctx)
-	if err == gcs.ErrBucketNotExist {
+	if err != nil && err != gcs.ErrBucketNotExist {
+		return Storage{}, fmt.Errorf("Failed to get bucket: %s", err)
+	} else if err == gcs.ErrBucketNotExist {
 		err = bucket.Create(ctx, p.ProjectId, nil)
-	} else if err != nil {
-		return Storage{}, fmt.Errorf("failed to get bucket: %s", err)
+	}
+	if err != nil {
+		return Storage{}, fmt.Errorf("Failed to create bucket: %s", err)
 	}
 
 	object := bucket.Object(objectName)

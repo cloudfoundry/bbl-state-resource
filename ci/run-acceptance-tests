@@ -1,11 +1,11 @@
 #!/bin/bash -exu
-ROOT="${PWD}"
 
-mv ${ROOT}/bbl-release/bbl-*_linux_x86-64 /usr/bin/bbl
+mv ${PWD}/bbl-release/bbl-*_linux_x86-64 /usr/bin/bbl
 chmod +x /usr/bin/bbl
 
 mkdir -p "${GOPATH}/src/github.com/cloudfoundry"
 
+ROOT="${PWD}"
 pushd "${GOPATH}/src/github.com/cloudfoundry" > /dev/null
   ln -s "${ROOT}/bbl-state-resource-src" bbl-state-resource
 

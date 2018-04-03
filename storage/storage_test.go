@@ -176,23 +176,6 @@ var _ = Describe("Storage", func() {
 			})
 		})
 
-		Context("when reading the object returns an error", func() {
-			BeforeEach(func() {
-				fakeObject.NewReaderCall.Returns.Error = errors.New("papaya")
-			})
-
-			It("returns the error", func() {
-				_, err := store.Download(storageDir)
-				Expect(err).To(MatchError("papaya"))
-
-				Expect(fakeTarrer.ReadCall.CallCount).To(Equal(0))
-				Expect(fakeTarrer.WriteCall.CallCount).To(Equal(0))
-
-				Expect(fakeReadCloser.CloseCall.CallCount).To(Equal(0))
-				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(0))
-			})
-		})
-
 		Context("when reading the archive returns an error", func() {
 			BeforeEach(func() {
 				fakeTarrer.ReadCall.Returns.Error = errors.New("mango")
