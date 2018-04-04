@@ -114,16 +114,18 @@ jobs:
   - get: time-resource-nightly
     trigger: true
   - put: lock
+    resource: concourse-pool-of-bbl-states
     params:
-      resource: concourse-pool-of-bbl-states
       acquire: true
   - put: bbl-state
     params:
       name_file: lock/name
       command: down
     on_success:
+      put: lock
       resource: concourse-pool-of-bbl-states
-      remove: lock
+      params:
+        remove: lock
 ```
 #### Parameters:
 none! names, checksums, and timestamps are encoded in our concourse versions, so we've got to fetch those specific ones.
