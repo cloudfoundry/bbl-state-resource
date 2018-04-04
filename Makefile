@@ -5,7 +5,7 @@
 GO_SRCS = $(shell find . -type f -name '*.go')
 
 test: ## run all the tests
-	ginkgo -r -race --randomizeAllSpecs
+	./scripts/test
 
 docker: $(GO_SRCS) ## rebuild your local docker container, test all the builds
 	docker build --rm -t bbl-state-resource .

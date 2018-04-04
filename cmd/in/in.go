@@ -31,9 +31,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// versions encode env names, but they can be overridden.
-	// if you provide an env config, you will not necessarily fetch
-	// the version that concourse has provided.
 	storageClient, err := storage.NewStorageClient(
 		inRequest.Source.GCPServiceAccountKey,
 		inRequest.Version.Name,

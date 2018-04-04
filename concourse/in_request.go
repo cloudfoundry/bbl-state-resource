@@ -10,7 +10,6 @@ import (
 
 type InRequest struct {
 	Source  Source          `json:"source"`
-	Params  InParams        `json:"params"`
 	Version storage.Version `json:"version"`
 }
 
