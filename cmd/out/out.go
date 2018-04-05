@@ -50,23 +50,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	stateDir := filepath.Join(sourcesDir, outRequest.Params.StateDir)
+	bblStateDir := filepath.Join(sourcesDir, outRequest.Params.StateDir)
 	if outRequest.Params.StateDir == "" {
-		stateDir = filepath.Join(sourcesDir, "bbl-state")
-		err = os.Mkdir(stateDir, os.ModePerm)
+		bblStateDir = filepath.Join(sourcesDir, "bbl-state")
+		err = os.Mkdir(bblStateDir, os.ModePerm)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to create %s directory: %s\n", stateDir, err)
+			fmt.Fprintf(os.Stderr, "failed to create %s directory: %s\n", bblStateDir, err)
 			os.Exit(1)
 		}
 
-		_, err = storageClient.Download(stateDir)
+		_, err = storageClient.Download(bblStateDir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to download bbl state: %s\n", err)
 			os.Exit(1)
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "running something like 'bbl %s --state-dir=%s'...\n", outRequest.Params.Command, stateDir)
+	fmt.Fprintf(os.Stderr, "running something like 'bbl %s --state-dir=%s'...\n", outRequest.Params.Command, bblStateDir)
+
+	stateDir := outrunner.NewStateDir(bblStateDir)
 
 	bblError := outrunner.RunBBL(name, stateDir, outRequest.Params.Command,
 		outrunner.AppendSourceFlags(outRequest.Params.Args, outRequest.Source))
@@ -74,7 +76,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to run bbl command: %s\n", err)
 	}
 
-	version, err := storageClient.Upload(stateDir)
+	version, err := storageClient.Upload(bblStateDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to upload bbl state: %s\n", err)
 		os.Exit(1)

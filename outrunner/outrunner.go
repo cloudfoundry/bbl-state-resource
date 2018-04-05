@@ -2,53 +2,56 @@ package outrunner
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 )
 
-func RunBBL(name, stateDir, command string, flags map[string]interface{}) error {
+type stateDir interface {
+	Path() string
+	Read() (BblState, error)
+	JumpboxSSHKey() (string, error)
+	WriteName(string) error
+	WriteMetadata(string) error
+}
+
+func RunBBL(name string, stateDir stateDir, command string, flags map[string]interface{}) error {
 	return RunInjected(bblRunner, name, stateDir, command, flags)
 }
 
-func RunInjected(r commandRunner,
-	name, stateDir, command string, flags map[string]interface{},
-) error {
+func RunInjected(r commandRunner, name string, stateDir stateDir, command string, flags map[string]interface{}) error {
+	bblState, err := stateDir.Read()
+	if err != nil {
+		return err
+	}
+
+	_ = bblState.Director.ClientUsername
+	_ = bblState.Director.ClientSecret
+	_ = bblState.Director.Address
+	_ = bblState.Director.CaCert
+
+	_, err = stateDir.JumpboxSSHKey()
+	if err != nil {
+		return err
+	}
+
+	err = stateDir.WriteName(name)
+	if err != nil {
+		return err
+	}
+
+	err = stateDir.WriteMetadata(name)
+	if err != nil {
+		return err
+	}
+
 	args := []string{}
-	addArg := func(key string, value interface{}) {
+	args = append(args, fmt.Sprintf("--name=%s", name))
+	args = append(args, fmt.Sprintf("--state-dir=%s", stateDir.Path()))
+	for key, value := range flags {
 		args = append(args, fmt.Sprintf("--%s=%s", key, value))
 	}
 
-	addArg("name", name)
-	addArg("state-dir", stateDir)
-
-	for key, value := range flags {
-		addArg(key, value)
-	}
-
-	err := writeInteropFiles(stateDir, name)
-	if err != nil {
-		return err
-	}
-
 	return r.Run(command, args)
-}
-
-func writeInteropFiles(stateDir, name string) error {
-	err := ioutil.WriteFile(
-		filepath.Join(stateDir, "name"),
-		[]byte(name),
-		os.ModePerm,
-	)
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(
-		filepath.Join(stateDir, "metadata"),
-		[]byte(name),
-		os.ModePerm,
-	)
 }
 
 type commandRunner interface {
