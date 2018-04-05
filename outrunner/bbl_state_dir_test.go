@@ -26,6 +26,17 @@ jumpbox_ssh:
   private_key: da-key
 `
 
+const sampleMetadata = `target: target
+client: da-client
+client_secret: da-secret
+ca_cert: da-cert
+jumpbox_url: da-url
+jumpbox_ssh_key: |-
+  a-key
+  with two lines
+jumpbox_username: da-username
+`
+
 var _ = Describe("StateDir", func() {
 	var (
 		stateDir outrunner.StateDir
@@ -75,13 +86,26 @@ var _ = Describe("StateDir", func() {
 	})
 
 	Describe("WriteMetadata", func() {
+		var boshConfig outrunner.BoshDeploymentResourceConfig
+		BeforeEach(func() {
+			boshConfig = outrunner.BoshDeploymentResourceConfig{
+				Target:          "target",
+				Client:          "da-client",
+				ClientSecret:    "da-secret",
+				CaCert:          "da-cert",
+				JumpboxUrl:      "da-url",
+				JumpboxUsername: "da-username",
+				JumpboxSSHKey: `a-key
+with two lines`,
+			}
+		})
 		It("writes a metadata file with contents", func() {
-			err := stateDir.WriteMetadata("banana")
+			err := stateDir.WriteBoshDeploymentResourceConfig(boshConfig)
 			Expect(err).NotTo(HaveOccurred())
 
 			contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "metadata"))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(string(contents)).To(Equal("banana"))
+			Expect(string(contents)).To(Equal(sampleMetadata))
 		})
 	})
 

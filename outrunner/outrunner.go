@@ -11,7 +11,7 @@ type stateDir interface {
 	Read() (BblState, error)
 	JumpboxSSHKey() (string, error)
 	WriteName(string) error
-	WriteMetadata(string) error
+	WriteBoshDeploymentResourceConfig(BoshDeploymentResourceConfig) error
 }
 
 func RunBBL(name string, stateDir stateDir, command string, flags map[string]interface{}) error {
@@ -19,27 +19,7 @@ func RunBBL(name string, stateDir stateDir, command string, flags map[string]int
 }
 
 func RunInjected(r commandRunner, name string, stateDir stateDir, command string, flags map[string]interface{}) error {
-	bblState, err := stateDir.Read()
-	if err != nil {
-		return err
-	}
-
-	_ = bblState.Director.ClientUsername
-	_ = bblState.Director.ClientSecret
-	_ = bblState.Director.Address
-	_ = bblState.Director.CaCert
-
-	_, err = stateDir.JumpboxSSHKey()
-	if err != nil {
-		return err
-	}
-
-	err = stateDir.WriteName(name)
-	if err != nil {
-		return err
-	}
-
-	err = stateDir.WriteMetadata(name)
+	err := stateDir.WriteName(name)
 	if err != nil {
 		return err
 	}
@@ -51,7 +31,30 @@ func RunInjected(r commandRunner, name string, stateDir stateDir, command string
 		args = append(args, fmt.Sprintf("--%s=%s", key, value))
 	}
 
-	return r.Run(command, args)
+	err = r.Run(command, args)
+	if err != nil {
+		return fmt.Errorf("failed running bbl %s --state-dir=%s <sensitive flags omitted>: %s", command, stateDir.Path(), err)
+	}
+
+	bblState, err := stateDir.Read()
+	if err != nil {
+		return fmt.Errorf("failed reading bbl state: %s", err)
+	}
+
+	sshKey, err := stateDir.JumpboxSSHKey()
+	if err != nil {
+		return fmt.Errorf("failed reading jumpbox ssh key: %s", err)
+	}
+
+	return stateDir.WriteBoshDeploymentResourceConfig(BoshDeploymentResourceConfig{
+		Target:          bblState.Director.Address,
+		Client:          bblState.Director.ClientUsername,
+		ClientSecret:    bblState.Director.ClientSecret,
+		CaCert:          bblState.Director.CaCert,
+		JumpboxUrl:      bblState.Jumpbox.URL,
+		JumpboxSSHKey:   sshKey,
+		JumpboxUsername: "jumpbox",
+	})
 }
 
 type commandRunner interface {

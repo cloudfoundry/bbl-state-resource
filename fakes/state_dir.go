@@ -29,7 +29,7 @@ type StateDir struct {
 	WriteMetadataCall struct {
 		CallCount int
 		Receives  struct {
-			Metadata string
+			BoshDeploymentResourceConfig outrunner.BoshDeploymentResourceConfig
 		}
 		Returns struct {
 			Error error
@@ -65,9 +65,9 @@ func (s *StateDir) Path() string {
 	return s.PathCall.Returns.Path
 }
 
-func (s *StateDir) WriteMetadata(metadata string) error {
+func (s *StateDir) WriteBoshDeploymentResourceConfig(c outrunner.BoshDeploymentResourceConfig) error {
 	s.WriteMetadataCall.CallCount++
-	s.WriteMetadataCall.Receives.Metadata = metadata
+	s.WriteMetadataCall.Receives.BoshDeploymentResourceConfig = c
 
 	return s.WriteMetadataCall.Returns.Error
 }

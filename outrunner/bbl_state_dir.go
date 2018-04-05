@@ -69,8 +69,26 @@ func (b StateDir) JumpboxSSHKey() (string, error) {
 	return p.JumpboxSSH.PrivateKey, nil
 }
 
-func (b StateDir) WriteMetadata(metadata string) error {
-	return ioutil.WriteFile(filepath.Join(b.dir, "metadata"), []byte(metadata), os.ModePerm)
+type BoshDeploymentResourceConfig struct {
+	Target          string `yaml:"target"`
+	Client          string `yaml:"client"`
+	ClientSecret    string `yaml:"client_secret"`
+	CaCert          string `yaml:"ca_cert"`
+	JumpboxUrl      string `yaml:"jumpbox_url"`
+	JumpboxSSHKey   string `yaml:"jumpbox_ssh_key"`
+	JumpboxUsername string `yaml:"jumpbox_username"`
+}
+
+func (b StateDir) WriteBoshDeploymentResourceConfig(c BoshDeploymentResourceConfig) error {
+	bytes, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(filepath.Join(b.dir, "bdr-source-file"), []byte(bytes), os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath.Join(b.dir, "metadata"), []byte(bytes), os.ModePerm)
 }
 
 func (b StateDir) WriteName(name string) error {

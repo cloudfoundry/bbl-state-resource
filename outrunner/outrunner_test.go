@@ -1,6 +1,8 @@
 package outrunner_test
 
 import (
+	"errors"
+
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
 	"github.com/cloudfoundry/bbl-state-resource/fakes"
 	"github.com/cloudfoundry/bbl-state-resource/outrunner"
@@ -18,6 +20,9 @@ var _ = Describe("Run", func() {
 	BeforeEach(func() {
 		stateDir = &fakes.StateDir{}
 		stateDir.PathCall.Returns.Path = "some-bbl-state-dir"
+		stateDir.ReadCall.Returns.BblState.Jumpbox.URL = "some-jumpbox"
+		stateDir.ReadCall.Returns.BblState.Director.Address = "some-director"
+		stateDir.JumpboxSSHKeyCall.Returns.Key = "some-ssh-key"
 		commandRunner = &fakes.CommandRunner{}
 	})
 
@@ -44,12 +49,24 @@ var _ = Describe("Run", func() {
 				"--lb-key=some-lb-key",
 				"--state-dir=some-bbl-state-dir",
 			))
+		})
+
+		It("writes out the correct metadata for interoperation with other concourse resources", func() {
+			err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, params.Command, params.Args)
+			Expect(err).NotTo(HaveOccurred())
 
 			Expect(stateDir.WriteNameCall.CallCount).To(Equal(1))
 			Expect(stateDir.WriteNameCall.Receives.Name).To(Equal("some-env-name"))
 
 			Expect(stateDir.WriteMetadataCall.CallCount).To(Equal(1))
-			Expect(stateDir.WriteMetadataCall.Receives.Metadata).To(Equal("some-env-name"))
+			Expect(stateDir.WriteMetadataCall.Receives.BoshDeploymentResourceConfig).To(Equal(
+				outrunner.BoshDeploymentResourceConfig{
+					Target:          "some-director",
+					JumpboxUrl:      "some-jumpbox",
+					JumpboxSSHKey:   "some-ssh-key",
+					JumpboxUsername: "jumpbox",
+				}),
+			)
 		})
 	})
 
@@ -71,6 +88,39 @@ var _ = Describe("Run", func() {
 				"--name=some-env-name",
 				"--state-dir=some-bbl-state-dir",
 			))
+		})
+
+		Context("when the call to bbl failes", func() {
+			BeforeEach(func() {
+				commandRunner.RunCall.Returns.Error = errors.New("some-error")
+			})
+
+			It("errors", func() {
+				err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, params.Command, params.Args)
+				Expect(err).To(MatchError("failed running bbl up --state-dir=some-bbl-state-dir <sensitive flags omitted>: some-error"))
+			})
+		})
+
+		Context("when we fail to read the bbl state", func() {
+			BeforeEach(func() {
+				stateDir.ReadCall.Returns.Error = errors.New("some-error")
+			})
+
+			It("errors", func() {
+				err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, params.Command, params.Args)
+				Expect(err).To(MatchError("failed reading bbl state: some-error"))
+			})
+		})
+
+		Context("when we fail to fetch the jumpbox ssh key", func() {
+			BeforeEach(func() {
+				stateDir.JumpboxSSHKeyCall.Returns.Error = errors.New("some-error")
+			})
+
+			It("errors", func() {
+				err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, params.Command, params.Args)
+				Expect(err).To(MatchError("failed reading jumpbox ssh key: some-error"))
+			})
 		})
 	})
 })
