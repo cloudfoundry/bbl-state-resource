@@ -20,7 +20,6 @@ var _ = Describe("Run", func() {
 	BeforeEach(func() {
 		stateDir = &fakes.StateDir{}
 		stateDir.PathCall.Returns.Path = "some-bbl-state-dir"
-
 		commandRunner = &fakes.CommandRunner{}
 	})
 

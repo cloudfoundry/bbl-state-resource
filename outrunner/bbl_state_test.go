@@ -10,6 +10,17 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+const sample = `
+{
+	"jumpbox": {
+		"url": "nope.com"
+	},
+	"bosh": {
+		"directorAddress": "da-address"
+	}
+}
+`
+
 var _ = Describe("StateDir", func() {
 	var (
 		stateDir outrunner.StateDir
@@ -23,7 +34,7 @@ var _ = Describe("StateDir", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		tmpState := filepath.Join(tmpDir, "bbl-state.json")
-		err = ioutil.WriteFile(tmpState, []byte(`{ "jumpbox": { "url": "nope.com" } }`), os.ModePerm)
+		err = ioutil.WriteFile(tmpState, []byte(sample), os.ModePerm)
 		Expect(err).NotTo(HaveOccurred())
 
 		stateDir = outrunner.NewStateDir(tmpDir)
@@ -34,5 +45,6 @@ var _ = Describe("StateDir", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(bblState.Jumpbox.URL).To(Equal("nope.com"))
+		Expect(bblState.Director.Address).To(Equal("da-address"))
 	})
 })

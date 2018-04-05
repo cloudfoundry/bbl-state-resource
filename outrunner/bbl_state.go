@@ -86,17 +86,9 @@ func (b StateDir) JumpboxSSHKey() (string, error) {
 }
 
 func (b StateDir) WriteMetadata(metadata string) error {
-	err := ioutil.WriteFile(filepath.Join(b.dir, "metadata"), []byte(metadata), os.ModePerm)
-	if err != nil {
-		return err
-	}
-	return nil
+	return ioutil.WriteFile(filepath.Join(b.dir, "metadata"), []byte(metadata), os.ModePerm)
 }
 
 func (b StateDir) WriteName(name string) error {
-	err := ioutil.WriteFile(filepath.Join(b.dir, "name"), []byte(name), os.ModePerm)
-	if err != nil {
-		return err
-	}
-	return nil
+	return ioutil.WriteFile(filepath.Join(b.dir, "name"), []byte(name), os.ModePerm)
 }
