@@ -1,8 +1,6 @@
 package outrunner_test
 
 import (
-	"strconv"
-
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
 	"github.com/cloudfoundry/bbl-state-resource/fakes"
 	"github.com/cloudfoundry/bbl-state-resource/outrunner"
@@ -24,28 +22,19 @@ var _ = Describe("Run", func() {
 	})
 
 	Context("with optional flags", func() {
-		var request concourse.OutRequest
+		var params concourse.OutParams
 		BeforeEach(func() {
-			request = concourse.OutRequest{
-				Source: concourse.Source{
-					IAAS:                 "some-iaas",
-					LBType:               "some-lb-type",
-					LBDomain:             "some-lb-domain",
-					GCPServiceAccountKey: strconv.Quote(`{"some-json": "object"}`),
-					GCPRegion:            "some-region",
-				},
-				Params: concourse.OutParams{
-					Command: "up",
-					Args: structs.Map(concourse.UpArgs{
-						LBCert: "some-lb-cert",
-						LBKey:  "some-lb-key",
-					}),
-				},
+			params = concourse.OutParams{
+				Command: "up",
+				Args: structs.Map(concourse.UpArgs{
+					LBCert: "some-lb-cert",
+					LBKey:  "some-lb-key",
+				}),
 			}
 		})
 
 		It("runs bbl up with the appropriate inputs", func() {
-			err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, request.Params.Command, request.Params.Args)
+			err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, params.Command, params.Args)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(commandRunner.RunCall.Receives.Command).To(Equal("up"))
@@ -65,23 +54,16 @@ var _ = Describe("Run", func() {
 	})
 
 	Context("without optional args", func() {
-		var request concourse.OutRequest
+		var params concourse.OutParams
 		BeforeEach(func() {
-			request = concourse.OutRequest{
-				Source: concourse.Source{
-					IAAS:                 "some-iaas",
-					GCPServiceAccountKey: strconv.Quote(`{"some-json": "object"}`),
-					GCPRegion:            "some-region",
-				},
-				Params: concourse.OutParams{
-					Command: "up",
-					Args:    structs.Map(concourse.UpArgs{}),
-				},
+			params = concourse.OutParams{
+				Command: "up",
+				Args:    structs.Map(concourse.UpArgs{}),
 			}
 		})
 
 		It("omits the corresponding flags", func() {
-			err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, request.Params.Command, request.Params.Args)
+			err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, params.Command, params.Args)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(commandRunner.RunCall.Receives.Command).To(Equal("up"))
