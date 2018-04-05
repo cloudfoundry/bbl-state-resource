@@ -58,12 +58,10 @@ var _ = Describe("StateDir", func() {
 	Describe("JumpboxSSHKey", func() {
 		BeforeEach(func() {
 			varsDir := filepath.Join(tmpDir, "vars")
-
 			err := os.Mkdir(varsDir, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			varsStore := filepath.Join(varsDir, "jumpbox-vars-store.yml")
-
 			err = ioutil.WriteFile(varsStore, []byte(sampleJumpboxVarsStore), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 		})
@@ -73,6 +71,28 @@ var _ = Describe("StateDir", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(key).To(Equal("da-key"))
+		})
+	})
+
+	Describe("WriteMetadata", func() {
+		It("writes a metadata file with contents", func() {
+			err := stateDir.WriteMetadata("banana")
+			Expect(err).NotTo(HaveOccurred())
+
+			contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "metadata"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(contents)).To(Equal("banana"))
+		})
+	})
+
+	Describe("WriteName", func() {
+		It("writes a name file with contents", func() {
+			err := stateDir.WriteName("banana")
+			Expect(err).NotTo(HaveOccurred())
+
+			contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "name"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(contents)).To(Equal("banana"))
 		})
 	})
 })
