@@ -64,9 +64,9 @@ func (b StateDir) Read() (BblState, error) {
 }
 
 func (b StateDir) JumpboxSSHKey() (string, error) {
-	varsDir := filepath.Join(b.dir, "vars")
+	path := filepath.Join(b.dir, "vars", "jumpbox-vars-store.yml")
 
-	varsStore, err := ioutil.ReadFile(filepath.Join(varsDir, "jumpbox-vars-store.yml"))
+	contents, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", fmt.Errorf("Read jumpbox vars store: %s", err)
 	}
@@ -77,7 +77,7 @@ func (b StateDir) JumpboxSSHKey() (string, error) {
 		} `yaml:"jumpbox_ssh"`
 	}
 
-	err = yaml.Unmarshal(varsStore, &p)
+	err = yaml.Unmarshal(contents, &p)
 	if err != nil {
 		return "", err
 	}

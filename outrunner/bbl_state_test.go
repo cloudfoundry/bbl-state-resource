@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const sample = `
+const sampleBblState = `
 {
 	"jumpbox": {
 		"url": "nope.com"
@@ -19,6 +19,11 @@ const sample = `
 		"directorAddress": "da-address"
 	}
 }
+`
+
+const sampleJumpboxVarsStore = `
+jumpbox_ssh:
+  private_key: da-key
 `
 
 var _ = Describe("StateDir", func() {
@@ -33,18 +38,41 @@ var _ = Describe("StateDir", func() {
 		tmpDir, err = ioutil.TempDir("", "")
 		Expect(err).NotTo(HaveOccurred())
 
-		tmpState := filepath.Join(tmpDir, "bbl-state.json")
-		err = ioutil.WriteFile(tmpState, []byte(sample), os.ModePerm)
+		tmpJson := filepath.Join(tmpDir, "bbl-state.json")
+		err = ioutil.WriteFile(tmpJson, []byte(sampleBblState), os.ModePerm)
 		Expect(err).NotTo(HaveOccurred())
 
 		stateDir = outrunner.NewStateDir(tmpDir)
 	})
 
-	It("reads the bbl state directory and returns the bbl state object", func() {
-		bblState, err := stateDir.Read()
-		Expect(err).NotTo(HaveOccurred())
+	Describe("Read", func() {
+		It("reads the bbl state directory and returns the bbl state object", func() {
+			bblState, err := stateDir.Read()
+			Expect(err).NotTo(HaveOccurred())
 
-		Expect(bblState.Jumpbox.URL).To(Equal("nope.com"))
-		Expect(bblState.Director.Address).To(Equal("da-address"))
+			Expect(bblState.Jumpbox.URL).To(Equal("nope.com"))
+			Expect(bblState.Director.Address).To(Equal("da-address"))
+		})
+	})
+
+	Describe("JumpboxSSHKey", func() {
+		BeforeEach(func() {
+			varsDir := filepath.Join(tmpDir, "vars")
+
+			err := os.Mkdir(varsDir, os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			varsStore := filepath.Join(varsDir, "jumpbox-vars-store.yml")
+
+			err = ioutil.WriteFile(varsStore, []byte(sampleJumpboxVarsStore), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns the jumpbox ssh key", func() {
+			key, err := stateDir.JumpboxSSHKey()
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(key).To(Equal("da-key"))
+		})
 	})
 })
