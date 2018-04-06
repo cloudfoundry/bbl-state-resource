@@ -28,30 +28,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	outRequest, err := concourse.NewOutRequest(stdin)
+	req, err := concourse.NewOutRequest(stdin)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err)
 		os.Exit(1)
 	}
 
-	name, err := outrunner.Name(sourcesDir, outRequest.Params)
+	name, err := outrunner.Name(sourcesDir, req.Params)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 
-	storageClient, err := storage.NewStorageClient(
-		outRequest.Source.GCPServiceAccountKey,
-		name,
-		outRequest.Source.Bucket,
-	)
+	storageClient, err := storage.NewStorageClient(req.Source.GCPServiceAccountKey, name, req.Source.Bucket)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create storage client: %s\n", err)
 		os.Exit(1)
 	}
 
-	bblStateDir := filepath.Join(sourcesDir, outRequest.Params.StateDir)
-	if outRequest.Params.StateDir == "" {
+	bblStateDir := filepath.Join(sourcesDir, req.Params.StateDir)
+	if req.Params.StateDir == "" {
 		bblStateDir = filepath.Join(sourcesDir, "bbl-state")
 		err = os.Mkdir(bblStateDir, os.ModePerm)
 		if err != nil {
@@ -66,13 +62,12 @@ func main() {
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "running something like 'bbl %s --state-dir=%s'...\n", outRequest.Params.Command, bblStateDir)
+	fmt.Fprintf(os.Stderr, "running something like 'bbl %s --state-dir=%s'...\n", req.Params.Command, bblStateDir)
 
 	stateDir := outrunner.NewStateDir(bblStateDir)
 
-	bblError := outrunner.RunBBL(name, stateDir, outRequest.Params.Command,
-		outrunner.AppendSourceFlags(outRequest.Params.Args, outRequest.Source))
-	if bblError != nil {
+	err = outrunner.RunBBL(name, stateDir, req.Params.Command, outrunner.AppendSourceFlags(req.Params.Args, req.Source))
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to run bbl command: %s\n", err)
 	}
 
