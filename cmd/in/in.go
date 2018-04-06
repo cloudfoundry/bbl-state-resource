@@ -25,17 +25,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	inRequest, err := concourse.NewInRequest(rawBytes)
+	req, err := concourse.NewInRequest(rawBytes)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err)
 		os.Exit(1)
 	}
 
-	storageClient, err := storage.NewStorageClient(
-		inRequest.Source.GCPServiceAccountKey,
-		inRequest.Version.Name,
-		inRequest.Source.Bucket,
-	)
+	storageClient, err := storage.NewStorageClient(req.Source.GCPServiceAccountKey, req.Version.Name, req.Source.Bucket)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create storage client: %s\n", err)
 		os.Exit(1)

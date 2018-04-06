@@ -76,6 +76,9 @@ var _ = Describe("out", func() {
 				Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`{"version":{"name":"%s","ref":".+","updated":".+"}}`, name)))
 				_, err = os.Stat(filepath.Join(downSourcesDir, "bbl-state", "bbl-state.json"))
 				Expect(err).To(HaveOccurred())
+
+				_, err = ioutil.ReadFile(filepath.Join(downSourcesDir, "bbl-state", "metadata"))
+				Expect(err).To(HaveOccurred())
 			})
 		})
 
@@ -89,61 +92,82 @@ var _ = Describe("out", func() {
 				Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`{"version":{"name":"%s","ref":".+","updated":".+"}}`, name)))
 				_, err = os.Open(filepath.Join(upSourcesDir, "bbl-state", "bbl-state.json"))
 				Expect(err).NotTo(HaveOccurred())
+
+				bytes, err := ioutil.ReadFile(filepath.Join(upSourcesDir, "bbl-state", "metadata"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(bytes).To(ContainSubstring("target:"))
+				Expect(bytes).To(ContainSubstring("client_secret:"))
+				Expect(bytes).To(ContainSubstring("jumpbox_ssh_key:"))
 			})
 		})
 	})
 
-	// at the moment, this is not easily testable.
-	// it would require a way for bbl to consistently fail on the first command but also
-	// write files, OR a way to delete uploaded state in the aftereach so that we can
-	// inject a fake file like the test does as it is written now
-	PContext("bbl exits 1 due to misconfiguration", func() {
-		It("still uploads the failed state", func() {
-			name := fmt.Sprintf("bsr-test-bad-out-%d-%s", GinkgoParallelNode(), projectId)
-			var (
-				badInput io.Reader
-			)
+	Context("bbl exits 1 due to misconfiguration", func() {
+		var (
+			sourcesDir string
+			name       string
+			badInput   io.Reader
+
+			badTerraformContents string
+		)
+		BeforeEach(func() {
+			var err error
+			sourcesDir, err = ioutil.TempDir("", "bad_out_test")
+			Expect(err).NotTo(HaveOccurred())
+			stateDir := filepath.Join(sourcesDir, "bbl-state")
+			err = os.MkdirAll(filepath.Join(stateDir, "terraform"), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			name = fmt.Sprintf("bsr-test-bad-out-%d-%s", GinkgoParallelNode(), projectId)
 			badRequest := fmt.Sprintf(`{
 				"source": {
-					"name": "%s",
+					"bucket": "bsr-acc-tests-%s",
 					"iaas": "gcp",
 					"gcp-region": "us-east1",
 					"gcp-service-account-key": %s
 				},
 				"params": {
-					"command": "make-bbl-fail"
+					"command": "up",
+					"name": "%s",
+					"state_dir": "bbl-state"
 				}
-			}`, name, strconv.Quote(serviceAccountKey))
+			}`, projectId, strconv.Quote(serviceAccountKey), name)
 			badInput = bytes.NewBuffer([]byte(badRequest))
-			putTargetDir, err := ioutil.TempDir("", "bad_out_test")
-			Expect(err).NotTo(HaveOccurred())
 
-			bblStateContents := fmt.Sprintf(`{ "fake-json": "%s" }`, putTargetDir)
-			By("putting a bogus bbl-state.json into a bblStateContents", func() {
-				bblStatePath := filepath.Join(putTargetDir, "not-bbl-state.json")
-				err = ioutil.WriteFile(bblStatePath, []byte(bblStateContents), os.ModePerm)
+			badTerraformContents = fmt.Sprintf(`trololololol {}{{{{ %s`, sourcesDir)
+			By("putting some bad terraform into a terraform override", func() {
+				bblStatePath := filepath.Join(stateDir, "terraform", "broken_override.tf")
+				err = ioutil.WriteFile(bblStatePath, []byte(badTerraformContents), os.ModePerm)
 				Expect(err).NotTo(HaveOccurred())
 			})
+		})
 
+		It("still uploads the failed state", func() {
 			By("bbling up", func() {
-				cmd := exec.Command(outBinaryPath, putTargetDir)
+				cmd := exec.Command(outBinaryPath, sourcesDir)
 				cmd.Stdin = badInput
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10).Should(gexec.Exit(1), "bbl up should've failed when we misconfigured it")
-				Eventually(session.Out).Should(gbytes.Say(`{"version":{"ref":"[0-9a-f]+"}}`))
+				Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`{"version":{"name":"%s","ref":".+","updated":".+"}}`, name)))
+
+				_, err = os.Open(filepath.Join(sourcesDir, "bbl-state", "bdr-source-file"))
+				Expect(err).NotTo(HaveOccurred())
 			})
 
 			By("getting the resource again", func() {
 				inRequest := fmt.Sprintf(`{
 					"source": {
-						"name": "%s",
+						"bucket": "bsr-acc-tests-%s",
 						"iaas": "gcp",
 						"gcp-region": "us-east1",
 						"gcp-service-account-key": %s
 					},
-					"version": {"ref": "the-greatest"}
-				}`, name, strconv.Quote(serviceAccountKey))
+					"version": {
+						"name": "%s",
+						"ref": "the-greatest"
+					}
+				}`, projectId, strconv.Quote(serviceAccountKey), name)
 
 				getTargetDir, err := ioutil.TempDir("", "bad_test")
 				Expect(err).NotTo(HaveOccurred())
@@ -153,11 +177,11 @@ var _ = Describe("out", func() {
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10).Should(gexec.Exit(0))
-				Eventually(session.Out).Should(gbytes.Say(`{"version":{"ref":"[0-9a-f]+"}}`))
+				Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`{"version":{"name":"%s","ref":".+","updated":".+"}}`, name)))
 
-				f, err := os.Open(filepath.Join(getTargetDir, "not-bbl-state.json"))
+				f, err := os.Open(filepath.Join(getTargetDir, "terraform", "broken_override.tf"))
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(gbytes.BufferReader(f)).Should(gbytes.Say(bblStateContents))
+				Eventually(gbytes.BufferReader(f)).Should(gbytes.Say(badTerraformContents))
 			})
 		})
 	})
