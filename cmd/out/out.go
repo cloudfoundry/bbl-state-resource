@@ -66,9 +66,9 @@ func main() {
 
 	stateDir := outrunner.NewStateDir(bblStateDir)
 
-	err = outrunner.RunBBL(name, stateDir, req.Params.Command, outrunner.AppendSourceFlags(req.Params.Args, req.Source))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to run bbl command: %s\n", err)
+	bblError := outrunner.RunBBL(name, stateDir, req.Params.Command, outrunner.AppendSourceFlags(req.Params.Args, req.Source))
+	if bblError != nil {
+		fmt.Fprintf(os.Stderr, "failed to run bbl command: %s\n", bblError)
 	}
 
 	version, err := storageClient.Upload(bblStateDir)

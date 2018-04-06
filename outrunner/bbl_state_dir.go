@@ -36,6 +36,7 @@ func (b StateDir) Read() (BblState, error) {
 	if err != nil {
 		return BblState{}, err
 	}
+	defer file.Close()
 
 	state := BblState{}
 
@@ -79,7 +80,22 @@ type BoshDeploymentResourceConfig struct {
 	JumpboxUsername string `yaml:"jumpbox_username"`
 }
 
-func (b StateDir) WriteBoshDeploymentResourceConfig(c BoshDeploymentResourceConfig) error {
+func (b StateDir) ExpungeInteropFiles() error {
+	files := []string{"name", "metadata", "bdr-source-file"}
+	for _, filename := range files {
+		err := os.Remove(filepath.Join(b.dir, filename))
+		if !os.IsNotExist(err) && err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (b StateDir) WriteInteropFiles(name string, c BoshDeploymentResourceConfig) error {
+	err := ioutil.WriteFile(filepath.Join(b.dir, "name"), []byte(name), os.ModePerm)
+	if err != nil {
+		return err
+	}
 	bytes, err := yaml.Marshal(c)
 	if err != nil {
 		return err
@@ -89,8 +105,4 @@ func (b StateDir) WriteBoshDeploymentResourceConfig(c BoshDeploymentResourceConf
 		return err
 	}
 	return ioutil.WriteFile(filepath.Join(b.dir, "metadata"), []byte(bytes), os.ModePerm)
-}
-
-func (b StateDir) WriteName(name string) error {
-	return ioutil.WriteFile(filepath.Join(b.dir, "name"), []byte(name), os.ModePerm)
 }

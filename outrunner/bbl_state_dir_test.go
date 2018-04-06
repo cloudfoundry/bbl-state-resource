@@ -85,7 +85,7 @@ var _ = Describe("StateDir", func() {
 		})
 	})
 
-	Describe("WriteMetadata", func() {
+	Describe("InteropFiles", func() {
 		var boshConfig outrunner.BoshDeploymentResourceConfig
 		BeforeEach(func() {
 			boshConfig = outrunner.BoshDeploymentResourceConfig{
@@ -99,24 +99,60 @@ var _ = Describe("StateDir", func() {
 with two lines`,
 			}
 		})
-		It("writes a metadata file with contents", func() {
-			err := stateDir.WriteBoshDeploymentResourceConfig(boshConfig)
-			Expect(err).NotTo(HaveOccurred())
 
-			contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "metadata"))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(contents)).To(Equal(sampleMetadata))
+		Describe("WriteInteropFiles", func() {
+			It("writes bosh-deployment-resource files", func() {
+				err := stateDir.WriteInteropFiles("banana", boshConfig)
+				Expect(err).NotTo(HaveOccurred())
+
+				contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "bdr-source-file"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(contents)).To(Equal(sampleMetadata))
+
+				contents, err = ioutil.ReadFile(filepath.Join(tmpDir, "metadata"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(contents)).To(Equal(sampleMetadata))
+			})
+
+			It("writes pool-resource files", func() {
+				err := stateDir.WriteInteropFiles("banana", boshConfig)
+				Expect(err).NotTo(HaveOccurred())
+
+				contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "name"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(contents)).To(Equal("banana"))
+
+				_, err = ioutil.ReadFile(filepath.Join(tmpDir, "metadata"))
+				Expect(err).NotTo(HaveOccurred())
+			})
 		})
-	})
 
-	Describe("WriteName", func() {
-		It("writes a name file with contents", func() {
-			err := stateDir.WriteName("banana")
-			Expect(err).NotTo(HaveOccurred())
+		Describe("ExpungeInteropFiles", func() {
+			Context("when the interop files are present", func() {
+				BeforeEach(func() {
+					err := stateDir.WriteInteropFiles("banana", boshConfig)
+					Expect(err).NotTo(HaveOccurred())
+				})
 
-			contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "name"))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(contents)).To(Equal("banana"))
+				It("deletes the interop files", func() {
+					err := stateDir.ExpungeInteropFiles()
+					Expect(err).NotTo(HaveOccurred())
+
+					_, err = ioutil.ReadFile(filepath.Join(tmpDir, "bdr-source-file"))
+					Expect(err).To(HaveOccurred())
+
+					_, err = ioutil.ReadFile(filepath.Join(tmpDir, "metadata"))
+					Expect(err).To(HaveOccurred())
+
+					_, err = ioutil.ReadFile(filepath.Join(tmpDir, "name"))
+					Expect(err).To(HaveOccurred())
+				})
+			})
+
+			It("doesn't error when the interop files are not present", func() {
+				err := stateDir.ExpungeInteropFiles()
+				Expect(err).NotTo(HaveOccurred())
+			})
 		})
 	})
 })

@@ -2,6 +2,7 @@ package outrunner_test
 
 import (
 	"errors"
+	"os"
 
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
 	"github.com/cloudfoundry/bbl-state-resource/fakes"
@@ -55,11 +56,8 @@ var _ = Describe("Run", func() {
 			err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, params.Command, params.Args)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(stateDir.WriteNameCall.CallCount).To(Equal(1))
-			Expect(stateDir.WriteNameCall.Receives.Name).To(Equal("some-env-name"))
-
-			Expect(stateDir.WriteMetadataCall.CallCount).To(Equal(1))
-			Expect(stateDir.WriteMetadataCall.Receives.BoshDeploymentResourceConfig).To(Equal(
+			Expect(stateDir.WriteInteropFilesCall.CallCount).To(Equal(1))
+			Expect(stateDir.WriteInteropFilesCall.Receives.Config).To(Equal(
 				outrunner.BoshDeploymentResourceConfig{
 					Target:          "some-director",
 					JumpboxUrl:      "some-jumpbox",
@@ -90,7 +88,7 @@ var _ = Describe("Run", func() {
 			))
 		})
 
-		Context("when the call to bbl failes", func() {
+		Context("when the call to bbl fails", func() {
 			BeforeEach(func() {
 				commandRunner.RunCall.Returns.Error = errors.New("some-error")
 			})
@@ -106,9 +104,34 @@ var _ = Describe("Run", func() {
 				stateDir.ReadCall.Returns.Error = errors.New("some-error")
 			})
 
-			It("errors", func() {
+			It("does not error", func() {
 				err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, params.Command, params.Args)
-				Expect(err).To(MatchError("failed reading bbl state: some-error"))
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+
+		Context("when we fail to read the bbl state because it does not exist", func() {
+			BeforeEach(func() {
+				stateDir.ReadCall.Returns.Error = os.ErrNotExist
+			})
+
+			It("does not error, but does expunge interop files", func() {
+				err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, params.Command, params.Args)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(stateDir.ExpungeInteropFilesCall.CallCount).To(Equal(1))
+			})
+
+			Context("when we fail to expunge interop files", func() {
+				BeforeEach(func() {
+					stateDir.ExpungeInteropFilesCall.Returns.Error = errors.New("wat")
+				})
+
+				It("does not error, and does not try to continue", func() {
+					err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, params.Command, params.Args)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(stateDir.WriteInteropFilesCall.CallCount).To(Equal(0))
+					Expect(stateDir.JumpboxSSHKeyCall.CallCount).To(Equal(0))
+				})
 			})
 		})
 
@@ -117,9 +140,9 @@ var _ = Describe("Run", func() {
 				stateDir.JumpboxSSHKeyCall.Returns.Error = errors.New("some-error")
 			})
 
-			It("errors", func() {
+			It("does not error", func() {
 				err := outrunner.RunInjected(commandRunner, "some-env-name", stateDir, params.Command, params.Args)
-				Expect(err).To(MatchError("failed reading jumpbox ssh key: some-error"))
+				Expect(err).NotTo(HaveOccurred())
 			})
 		})
 	})

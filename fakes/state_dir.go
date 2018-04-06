@@ -26,22 +26,20 @@ type StateDir struct {
 		}
 	}
 
-	WriteMetadataCall struct {
+	WriteInteropFilesCall struct {
 		CallCount int
 		Receives  struct {
-			BoshDeploymentResourceConfig outrunner.BoshDeploymentResourceConfig
+			Config outrunner.BoshDeploymentResourceConfig
+			Name   string
 		}
 		Returns struct {
 			Error error
 		}
 	}
 
-	WriteNameCall struct {
+	ExpungeInteropFilesCall struct {
 		CallCount int
-		Receives  struct {
-			Name string
-		}
-		Returns struct {
+		Returns   struct {
 			Error error
 		}
 	}
@@ -65,16 +63,16 @@ func (s *StateDir) Path() string {
 	return s.PathCall.Returns.Path
 }
 
-func (s *StateDir) WriteBoshDeploymentResourceConfig(c outrunner.BoshDeploymentResourceConfig) error {
-	s.WriteMetadataCall.CallCount++
-	s.WriteMetadataCall.Receives.BoshDeploymentResourceConfig = c
+func (s *StateDir) ExpungeInteropFiles() error {
+	s.ExpungeInteropFilesCall.CallCount++
 
-	return s.WriteMetadataCall.Returns.Error
+	return s.ExpungeInteropFilesCall.Returns.Error
 }
 
-func (s *StateDir) WriteName(name string) error {
-	s.WriteNameCall.CallCount++
-	s.WriteNameCall.Receives.Name = name
+func (s *StateDir) WriteInteropFiles(name string, c outrunner.BoshDeploymentResourceConfig) error {
+	s.WriteInteropFilesCall.CallCount++
+	s.WriteInteropFilesCall.Receives.Config = c
+	s.WriteInteropFilesCall.Receives.Name = name
 
-	return s.WriteNameCall.Returns.Error
+	return s.WriteInteropFilesCall.Returns.Error
 }

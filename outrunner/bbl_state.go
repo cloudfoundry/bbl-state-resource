@@ -3,6 +3,7 @@ package outrunner
 type BblState struct {
 	Jumpbox  Jumpbox  `json:"jumpbox"`
 	Director Director `json:"bosh"`
+	EnvID    string   `json:"envID"`
 }
 
 type Jumpbox struct {

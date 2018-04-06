@@ -10,8 +10,8 @@ type stateDir interface {
 	Path() string
 	Read() (BblState, error)
 	JumpboxSSHKey() (string, error)
-	WriteName(string) error
-	WriteBoshDeploymentResourceConfig(BoshDeploymentResourceConfig) error
+	WriteInteropFiles(name string, config BoshDeploymentResourceConfig) error
+	ExpungeInteropFiles() error
 }
 
 func RunBBL(name string, stateDir stateDir, command string, flags map[string]interface{}) error {
@@ -19,11 +19,6 @@ func RunBBL(name string, stateDir stateDir, command string, flags map[string]int
 }
 
 func RunInjected(r commandRunner, name string, stateDir stateDir, command string, flags map[string]interface{}) error {
-	err := stateDir.WriteName(name)
-	if err != nil {
-		return err
-	}
-
 	args := []string{}
 	args = append(args, fmt.Sprintf("--name=%s", name))
 	args = append(args, fmt.Sprintf("--state-dir=%s", stateDir.Path()))
@@ -31,22 +26,34 @@ func RunInjected(r commandRunner, name string, stateDir stateDir, command string
 		args = append(args, fmt.Sprintf("--%s=%s", key, value))
 	}
 
-	err = r.Run(command, args)
+	err := r.Run(command, args)
+	SyncInteropFiles(stateDir)
 	if err != nil {
 		return fmt.Errorf("failed running bbl %s --state-dir=%s <sensitive flags omitted>: %s", command, stateDir.Path(), err)
 	}
+	return nil
+}
 
+// best effort, log aggressively
+func SyncInteropFiles(stateDir stateDir) {
 	bblState, err := stateDir.Read()
+	if os.IsNotExist(err) {
+		err = stateDir.ExpungeInteropFiles()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to expunge interop files: %s\n", err)
+		}
+		return // quietly return if we've successfully expunged after bbl down
+	}
 	if err != nil {
-		return fmt.Errorf("failed reading bbl state: %s", err)
+		fmt.Fprintf(os.Stderr, "failed reading bbl-state: %s\n", err)
 	}
 
 	sshKey, err := stateDir.JumpboxSSHKey()
 	if err != nil {
-		return fmt.Errorf("failed reading jumpbox ssh key: %s", err)
+		fmt.Fprintf(os.Stderr, "failed reading jumpbox ssh key: %s\n", err)
 	}
 
-	return stateDir.WriteBoshDeploymentResourceConfig(BoshDeploymentResourceConfig{
+	err = stateDir.WriteInteropFiles(bblState.EnvID, BoshDeploymentResourceConfig{
 		Target:          bblState.Director.Address,
 		Client:          bblState.Director.ClientUsername,
 		ClientSecret:    bblState.Director.ClientSecret,
@@ -55,6 +62,10 @@ func RunInjected(r commandRunner, name string, stateDir stateDir, command string
 		JumpboxSSHKey:   sshKey,
 		JumpboxUsername: "jumpbox",
 	})
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to write interop files: %s\n", err)
+	}
 }
 
 type commandRunner interface {
