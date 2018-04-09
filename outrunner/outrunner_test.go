@@ -7,7 +7,6 @@ import (
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
 	"github.com/cloudfoundry/bbl-state-resource/fakes"
 	"github.com/cloudfoundry/bbl-state-resource/outrunner"
-	"github.com/fatih/structs"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -32,10 +31,10 @@ var _ = Describe("Run", func() {
 		BeforeEach(func() {
 			params = concourse.OutParams{
 				Command: "up",
-				Args: structs.Map(concourse.UpArgs{
-					LBCert: "some-lb-cert",
-					LBKey:  "some-lb-key",
-				}),
+				Args: map[string]interface{}{
+					"lb-key":  "some-lb-key",
+					"lb-cert": "some-lb-cert",
+				},
 			}
 		})
 
@@ -73,7 +72,7 @@ var _ = Describe("Run", func() {
 		BeforeEach(func() {
 			params = concourse.OutParams{
 				Command: "up",
-				Args:    structs.Map(concourse.UpArgs{}),
+				Args:    map[string]interface{}{},
 			}
 		})
 

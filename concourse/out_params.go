@@ -27,6 +27,6 @@ type OutParams struct {
 }
 
 type UpArgs struct {
-	LBCert string `json:"lb-cert" structs:"lb-cert,omitempty"`
-	LBKey  string `json:"lb-key" structs:"lb-key,omitempty"`
+	LBCert string `json:"lb-cert"`
+	LBKey  string `json:"lb-key"`
 }

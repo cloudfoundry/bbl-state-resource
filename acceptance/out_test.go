@@ -34,8 +34,8 @@ var _ = Describe("out", func() {
 				"source": {
 					"bucket": "bsr-acc-tests-%s",
 					"iaas": "gcp",
-					"gcp-region": "us-east1",
-					"gcp-service-account-key": %s
+					"gcp_region": "us-east1",
+					"gcp_service_account_key": %s
 				},
 				"params": {
 					"name": "%s",
@@ -52,8 +52,8 @@ var _ = Describe("out", func() {
 				"source": {
 					"bucket": "bsr-acc-tests-%s",
 					"iaas": "gcp",
-					"gcp-region": "us-east1",
-					"gcp-service-account-key": %s
+					"gcp_region": "us-east1",
+					"gcp_service_account_key": %s
 				},
 				"params": {
 					"name": "%s",
@@ -123,8 +123,8 @@ var _ = Describe("out", func() {
 				"source": {
 					"bucket": "bsr-acc-tests-%s",
 					"iaas": "gcp",
-					"gcp-region": "us-east1",
-					"gcp-service-account-key": %s
+					"gcp_region": "us-east1",
+					"gcp_service_account_key": %s
 				},
 				"params": {
 					"command": "up",
@@ -160,8 +160,8 @@ var _ = Describe("out", func() {
 					"source": {
 						"bucket": "bsr-acc-tests-%s",
 						"iaas": "gcp",
-						"gcp-region": "us-east1",
-						"gcp-service-account-key": %s
+						"gcp_region": "us-east1",
+						"gcp_service_account_key": %s
 					},
 					"version": {
 						"name": "%s",

@@ -175,8 +175,8 @@ var _ = Describe("check", func() {
 				"source": {
 					"bucket": "bsr-test-empty-%s",
 					"iaas": "gcp",
-					"gcp-region": "us-east1",
-					"gcp-service-account-key": %s
+					"gcp_region": "us-east1",
+					"gcp_service_account_key": %s
 				},
 				"version": {"ref": "the-greatest"}
 			}`, projectId, strconv.Quote(serviceAccountKey))

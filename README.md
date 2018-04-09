@@ -1,9 +1,7 @@
 # the bbl state dir concourse resource
-this is a concourse resource for provisioning bosh directors and using [bbl](https://github.com/cloudfoundry/bosh-bootloader) to manipulate cloud-stored bbl-states.
+This is a concourse resource for provisioning bosh directors and using [bbl](https://github.com/cloudfoundry/bosh-bootloader) to manipulate cloud-stored bbl-states.
 
-today, it automates provisioning bosh directors and their associated iaas resources. It also integrates well with concourse/pool-resource.
-
-tomorrow, we'd like our resource-provisioned bbl-states to easily plug into [bosh-deployment-resource](https://github.com/cloudfoundry/bosh-deployment-resource).
+It's built to play nice with [bosh-deployment-resource](https://github.com/cloudfoundry/bosh-deployment-resource) and [pool-resource](https://github.com/concourse/pool-resource).
 
 to bring this in to your concourse pipeline:
 ```yaml
@@ -15,7 +13,6 @@ resource_types:
 ```
 
 ## Source Configuration
-note that bbl arg keys use dashes, not underscores.
 #### Example:
 ```yaml
 resources:
@@ -24,28 +21,28 @@ resources:
   source:
     bucket: bbl-state
     iaas: gcp
-    gcp-region: us-east-1
-    gcp-service-account-key: {{bbl_gcp_service_account_key}}
+    gcp_region: us-east-1
+    gcp_service_account_key: {{bbl_gcp_service_account_key}}
 ```
 #### Parameters:
 `bucket`: **required**: the name of the bucket where you'd like your state-dir tarballs to be stored.
 
 `iaas`: **required**: gcp, for now, but we'll take aws soon. This is the iaas where you want your new bosh directors.
 
-`lb-type`: optional: `cf` or `concourse`, denotes the varietals of the load balancers you'd like to deploy with your director
+`lb_type`: optional: `cf` or `concourse`, denotes the varietals of the load balancers you'd like to deploy with your director
 
-`lb-domain`: optional: for cf, the system domain, for concourse, the web domain. NOTE: randomly named bosh directors will share a single domain at the moment and that will not go well. these features don't mix.
+`lb_domain`: optional: for cf, the system domain, for concourse, the web domain. NOTE: randomly named bosh directors will share a single domain at the moment and that will not go well. these features don't mix.
 
-`gcp-service-account-key`: **required**: your gcp service account key, formatted as JSON.
+`gcp_service_account_key`: **required**: your gcp service account key, formatted as JSON.
 
-`gcp-region`: **required**: the gcp region where you'd like your environments.
+`gcp_region`: **required**: the gcp region where you'd like your environments.
 
 ## Behaviour
 ### `put`: Deploy, upgrade, and destroy BOSH directors and its containing environment
 
 There are two primary modes of operation for bbl-state puts:
 1. By default, without a name configured, we'll generate random environment names for each `put: { command: up }`.
-1. If you've configured a name, name_file, or a state_dir, the resource will manipulate that environent.
+1. If you've configured a name, name_file, or a state_dir, the resource will manipulate that environment.
 
 #### Examples:
 ```yaml
@@ -85,7 +82,7 @@ jobs:
 
 `command`: **required**: `up`, `down`, `destroy`, `rotate`, or `cleanup-leftovers`. Any top-level command available to bbl.
 
-`args`: optional: a yaml hash containing additional flags as key-value pairs. these might be load balancer options or `filter: env-name` for leftovers.
+`args`: optional: a yaml hash containing additional flags as key-value pairs. these might be load balancer options or `filter: env-name` for leftovers. note that these use dashes, not underscores.
 
 `name`: optional: the name of the environment you'd like to manipulate. overrides name_file and state_dir.
 

@@ -25,10 +25,6 @@
   version = "0.18.0"
 
 [[constraint]]
-  name = "github.com/cloudfoundry/bosh-deployment-resource"
-  version = "2.9.0"
-
-[[constraint]]
   name = "github.com/mholt/archiver"
   branch = "master"
 

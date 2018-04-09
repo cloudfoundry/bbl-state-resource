@@ -1,12 +1,12 @@
 package concourse
 
 type Source struct {
-	Bucket string `json:"bucket,omitempty" yaml:"bucket" structs:"bucket,omitempty"`
-	IAAS   string `json:"iaas,omitempty" yaml:"iaas" structs:"iaas,omitempty"`
+	Bucket string `json:"bucket,omitempty" yaml:"bucket"`
+	IAAS   string `json:"iaas,omitempty" yaml:"iaas"`
 
-	LBType   string `json:"lb-type,omitempty" yaml:"lb-type" structs:"lb-type,omitempty"`
-	LBDomain string `json:"lb-domain,omitempty" yaml:"lb-domain" structs:"lb-domain,omitempty"`
+	LBType   string `json:"lb_type,omitempty" yaml:"lb_type"`
+	LBDomain string `json:"lb_domain,omitempty" yaml:"lb_domain"`
 
-	GCPServiceAccountKey string `json:"gcp-service-account-key,omitempty" yaml:"gcp-service-account-key" structs:"gcp-service-account-key,omitempty"`
-	GCPRegion            string `json:"gcp-region,omitempty" yaml:"gcp-region" structs:"gcp-region,omitempty"`
+	GCPServiceAccountKey string `json:"gcp_service_account_key,omitempty" yaml:"gcp_service_account_key"`
+	GCPRegion            string `json:"gcp_region,omitempty" yaml:"gcp_region"`
 }
