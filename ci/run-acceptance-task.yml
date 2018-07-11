@@ -4,7 +4,6 @@ platform: linux
 inputs:
 - name: bbl-state-resource-docker
 - name: bbl-state-resource-src
-- name: bbl-release
 
 run:
   path: bbl-state-resource-src/ci/run-acceptance-tests
