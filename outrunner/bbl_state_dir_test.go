@@ -66,6 +66,91 @@ var _ = Describe("StateDir", func() {
 		})
 	})
 
+	Describe("ApplyPlanPatches", func() {
+		var (
+			planPatchDir      string
+			planPatchContents string
+		)
+
+		BeforeEach(func() {
+			var err error
+			planPatchDir, err = ioutil.TempDir("", "")
+			Expect(err).NotTo(HaveOccurred())
+
+			planPatchContents = "tamarind"
+
+			planPatchFile := filepath.Join(planPatchDir, "some-patch-file")
+			err = ioutil.WriteFile(planPatchFile, []byte(planPatchContents), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should not return an error for ∅ (empty) patchPaths", func() {
+			var patchPaths []string
+			err := stateDir.ApplyPlanPatches(patchPaths)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should copy plan patch dir contents into state dir", func() {
+			err := stateDir.ApplyPlanPatches([]string{planPatchDir})
+			Expect(err).NotTo(HaveOccurred())
+
+			actualContents, err := ioutil.ReadFile(filepath.Join(tmpDir, "some-patch-file"))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(actualContents)).To(Equal(planPatchContents))
+		})
+
+		Context("with multiple plan patches", func() {
+			var (
+				newPlanPatchDir      string
+				newPlanPatchContents string
+			)
+
+			BeforeEach(func() {
+				var err error
+				newPlanPatchDir, err = ioutil.TempDir("", "")
+				Expect(err).NotTo(HaveOccurred())
+
+				newPlanPatchContents = "hibiscus"
+
+				newPlanPatchFile := filepath.Join(newPlanPatchDir, "new-patch-file")
+				err = ioutil.WriteFile(newPlanPatchFile, []byte(newPlanPatchContents), os.ModePerm)
+				Expect(err).NotTo(HaveOccurred())
+
+				overridePlanPatchFile := filepath.Join(newPlanPatchDir, "some-patch-file")
+				err = ioutil.WriteFile(overridePlanPatchFile, []byte(newPlanPatchContents), os.ModePerm)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("applies them all in order", func() {
+				err := stateDir.ApplyPlanPatches([]string{planPatchDir, newPlanPatchDir})
+				Expect(err).NotTo(HaveOccurred())
+
+				overrideContents, err := ioutil.ReadFile(filepath.Join(tmpDir, "some-patch-file"))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(overrideContents)).To(Equal(newPlanPatchContents))
+
+				newFileContents, err := ioutil.ReadFile(filepath.Join(tmpDir, "new-patch-file"))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(newFileContents)).To(Equal(newPlanPatchContents))
+			})
+		})
+
+		Context("when the plan patch dir does not exist", func() {
+			It("returns an error", func() {
+				missingPlanPatchDir := "missing-" + planPatchDir
+				err := stateDir.ApplyPlanPatches([]string{missingPlanPatchDir})
+				Expect(err).To(HaveOccurred())
+
+				_, err = os.Stat(filepath.Join(tmpDir, missingPlanPatchDir))
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+	})
+
 	Describe("JumpboxSSHKey", func() {
 		BeforeEach(func() {
 			varsDir := filepath.Join(tmpDir, "vars")

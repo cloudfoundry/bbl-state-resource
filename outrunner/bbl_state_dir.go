@@ -3,6 +3,7 @@ package outrunner
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -46,6 +47,88 @@ func (b StateDir) Read() (BblState, error) {
 	}
 
 	return state, nil
+}
+
+func copyDir(source, dest string) error {
+	info, err := os.Stat(source)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(dest, info.Mode())
+	if err != nil {
+		return err
+	}
+
+	files, err := ioutil.ReadDir(source)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		source := filepath.Join(source, file.Name())
+		dest := filepath.Join(dest, file.Name())
+
+		err := copyHelper(source, dest)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func copyFile(source, dest string) error {
+	in, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	info, err := in.Stat()
+	if err != nil {
+		return err
+	}
+
+	out, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_TRUNC, info.Mode())
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+	return out.Close()
+}
+
+func copyHelper(source, dest string) error {
+	info, err := os.Stat(source)
+	if err != nil {
+		return err
+	}
+
+	if info.IsDir() {
+		return copyDir(source, dest)
+	} else {
+		if info.Mode()&os.ModeSymlink != 0 {
+			return nil
+		}
+
+		return copyFile(source, dest)
+	}
+}
+
+func (b StateDir) ApplyPlanPatches(patchPaths []string) error {
+	for _, patch := range patchPaths {
+		err := copyHelper(patch, b.dir)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (b StateDir) JumpboxSSHKey() (string, error) {

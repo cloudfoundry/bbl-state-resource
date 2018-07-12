@@ -66,6 +66,8 @@ func main() {
 
 	stateDir := outrunner.NewStateDir(bblStateDir)
 
+	err = stateDir.ApplyPlanPatches(req.Params.PlanPatches)
+
 	bblError := outrunner.RunBBL(name, stateDir, req.Params.Command, outrunner.AppendSourceFlags(req.Params.Args, req.Source))
 	if bblError != nil {
 		fmt.Fprintf(os.Stderr, "failed to run bbl command: %s\n", bblError)

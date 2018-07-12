@@ -19,11 +19,12 @@ package concourse
 // bbl -n up --iaas=gcp --name some-env-name --lb-cert=----some cert----
 
 type OutParams struct {
-	Name     string                 `json:"name"`
-	NameFile string                 `json:"name_file"`
-	StateDir string                 `json:"state_dir"`
-	Command  string                 `json:"command"`
-	Args     map[string]interface{} `json:"args"`
+	Name        string                 `json:"name"`
+	NameFile    string                 `json:"name_file"`
+	StateDir    string                 `json:"state_dir"`
+	Command     string                 `json:"command"`
+	Args        map[string]interface{} `json:"args"`
+	PlanPatches []string               `json:"plan-patches"`
 }
 
 type UpArgs struct {
