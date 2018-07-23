@@ -133,8 +133,6 @@ Special outputs that you wouldn't find in a normal bbl-state include:
 1. `bbl-state/name`, which contains the environment name
 1. `bbl-state/metadata`, which is useful for plugging in to concourse/pool-resource
 
-TODO: additionally format target-dir/bdr-source-configuration + metadata for use by [bosh-deployment-resource](https://github.com/cloudfoundry/bosh-deployment-resource), and document.
-
 ## Development:
 
 things happen via the Makefile:
