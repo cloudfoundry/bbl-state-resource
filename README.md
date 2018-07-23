@@ -21,7 +21,7 @@ resources:
   source:
     bucket: bbl-state
     iaas: gcp
-    gcp_region: us-east-1
+    gcp_region: us-east1
     gcp_service_account_key: {{bbl_gcp_service_account_key}}
 ```
 #### Parameters:
