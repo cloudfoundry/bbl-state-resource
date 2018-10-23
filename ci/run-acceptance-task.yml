@@ -2,7 +2,6 @@
 platform: linux
 
 inputs:
-- name: bbl-state-resource-docker
 - name: bbl-state-resource-src
 
 run:
