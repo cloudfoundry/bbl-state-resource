@@ -1,4 +1,4 @@
-FROM golang:alpine as golang
+FROM relintdockerhubpushbot/cf-deployment-concourse-tasks
 WORKDIR /go/src/github.com/cloudfoundry/bbl-state-resource/
 COPY . .
 
@@ -9,26 +9,6 @@ RUN go install cmd/out/out.go
 RUN go install cmd/in/in.go
 
 MAINTAINER https://github.com/cloudfoundry/bbl-state-resource
-
-# install (or reinstall?) bosh-cli dependencies.
-# we'd love for this to work in a small alpine container, but the cli
-# and cpis seem to need ubuntu packages
-RUN apk update && apk add
-RUN apt-get update && apt-get -y install software-properties-common && \
-    add-apt-repository ppa:brightbox/ruby-ng -y && \
-    apt-get update && \
-    apt-get -y install ruby2.3 ruby2.3-dev \
-                       build-essential \
-                       libreadline6 libreadline6-dev \
-                       libsqlite3-dev libssl-dev \
-                       libxml2-dev libxslt-dev \
-                       libyaml-dev openssl \
-                       sqlite unzip wget curl jq zlib1g-dev zlibc && \
-    apt-get remove -y --purge software-properties-common
-
-# Install bosh_cli v2
-RUN curl -L "https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-$(curl -s https://api.github.com/repos/cloudfoundry/bosh-cli/releases | jq -r .[0].name | tr -d "v")-linux-amd64" -o "/usr/local/bin/bosh" && \
-  chmod +x "/usr/local/bin/bosh"
 
 ARG bbl_version=6.2.1
 RUN wget https://github.com/cloudfoundry/bosh-bootloader/releases/download/v${bbl_version}/bbl-v${bbl_version}_linux_x86-64 -O /usr/local/bin/bbl \
