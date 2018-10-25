@@ -8,8 +8,11 @@ RUN go install cmd/check/check.go
 RUN go install cmd/out/out.go
 RUN go install cmd/in/in.go
 
-FROM relintdockerhubpushbot/bosh-cli
 MAINTAINER https://github.com/cloudfoundry/bbl-state-resource
+
+# Install bosh_cli v2
+RUN curl -L "https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-$(curl -s https://api.github.com/repos/cloudfoundry/bosh-cli/releases | jq -r .[0].name | tr -d "v")-linux-amd64" -o "/usr/local/bin/bosh" && \
+  chmod +x "/usr/local/bin/bosh"
 
 # install (or reinstall?) bosh-cli dependencies.
 # we'd love for this to work in a small alpine container, but the cli
