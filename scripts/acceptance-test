@@ -1,3 +1,4 @@
 #!/bin/bash -exu
 
-ginkgo -r -p -race -randomizeAllSpecs -v acceptance
+CGO_ENABLED=1 ginkgo -r -p -race -randomizeAllSpecs -v acceptance
+
