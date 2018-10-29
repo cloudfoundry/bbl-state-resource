@@ -1,5 +1,6 @@
 #!/bin/bash -exu
 
+rm -rf "${GOPATH}/src/github.com/cloudfoundry"
 mkdir -p "${GOPATH}/src/github.com/cloudfoundry"
 
 ROOT="${PWD}"
