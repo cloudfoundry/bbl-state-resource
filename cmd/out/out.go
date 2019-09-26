@@ -22,6 +22,11 @@ func main() {
 	}
 	sourcesDir := os.Args[1]
 
+	if err := os.Chdir(sourcesDir); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to set working directory to %s: %s\n", sourcesDir, err)
+		os.Exit(1)
+	}
+
 	stdin, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err)
@@ -66,7 +71,10 @@ func main() {
 
 	stateDir := outrunner.NewStateDir(bblStateDir)
 
-	err = stateDir.ApplyPlanPatches(req.Params.PlanPatches)
+	if err := stateDir.ApplyPlanPatches(req.Params.PlanPatches); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to apply plan-patches to bbl state: %s\n", err)
+		os.Exit(1)
+	}
 
 	bblError := outrunner.RunBBL(name, stateDir, req.Params.Command, outrunner.AppendSourceFlags(req.Params.Args, req.Source))
 	if bblError != nil {
