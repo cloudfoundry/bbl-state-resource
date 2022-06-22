@@ -3,7 +3,7 @@ package outrunner_test
 import (
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
 	"github.com/cloudfoundry/bbl-state-resource/outrunner"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

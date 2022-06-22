@@ -10,7 +10,7 @@ import (
 
 	"github.com/cloudfoundry/bbl-state-resource/fakes"
 	"github.com/cloudfoundry/bbl-state-resource/storage"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

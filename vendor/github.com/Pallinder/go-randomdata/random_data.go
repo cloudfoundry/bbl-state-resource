@@ -9,6 +9,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 )
@@ -35,6 +36,8 @@ const (
 	DateOutputLayout = "Monday 2 Jan 2006"
 )
 
+const ALPHANUMERIC = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
 type jsonContent struct {
 	Adjectives          []string `json:"adjectives"`
 	Nouns               []string `json:"nouns"`
@@ -44,7 +47,7 @@ type jsonContent struct {
 	Domains             []string `json:"domains"`
 	People              []string `json:"people"`
 	StreetTypes         []string `json:"streetTypes"` // Taken from https://github.com/tomharris/random_data/blob/master/lib/random_data/locations.rb
-	Paragraphs          []string `json:"paragraphs"`  // Taken from feedbooks.com
+	Paragraphs          []string `json:"paragraphs"`  // Taken from feedbooks.com and www.gutenberg.org
 	Countries           []string `json:"countries"`   // Fetched from the world bank at http://siteresources.worldbank.org/DATASTATISTICS/Resources/CLASS.XLS
 	CountriesThreeChars []string `json:"countriesThreeChars"`
 	CountriesTwoChars   []string `json:"countriesTwoChars"`
@@ -57,13 +60,36 @@ type jsonContent struct {
 	FemaleTitles        []string `json:"femaleTitles"`
 	MaleTitles          []string `json:"maleTitles"`
 	Timezones           []string `json:"timezones"`           // https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+	Locales             []string `json:"locales"`             // https://tools.ietf.org/html/bcp47
 	UserAgents          []string `json:"userAgents"`          // http://techpatterns.com/downloads/firefox/useragentswitcher.xml
 	CountryCallingCodes []string `json:"countryCallingCodes"` // from https://github.com/datasets/country-codes/blob/master/data/country-codes.csv
+	ProvincesGB         []string `json:"provincesGB"`
+	StreetNameGB        []string `json:"streetNameGB"`
+	StreetTypesGB       []string `json:"streetTypesGB"`
+}
+
+type pRand struct {
+	pr *rand.Rand
+	mu *sync.Mutex
+}
+
+func (r *pRand) Intn(n int) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.pr.Intn(n)
+}
+
+func (r *pRand) Float64() float64 {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.pr.Float64()
 }
 
 var jsonData = jsonContent{}
+var privateRand *pRand
 
 func init() {
+	privateRand = &pRand{rand.New(rand.NewSource(time.Now().UnixNano())), &sync.Mutex{}}
 	jsonData = jsonContent{}
 
 	err := json.Unmarshal(data, &jsonData)
@@ -73,37 +99,25 @@ func init() {
 	}
 }
 
-func seedAndReturnRandom(n int) int {
-	rand.Seed(time.Now().UnixNano())
-	return rand.Intn(n)
-}
-
-func seedAndReturnRandomFloat() float64 {
-	rand.Seed(time.Now().UnixNano())
-	return rand.Float64()
+func CustomRand(randToUse *rand.Rand) {
+	privateRand.pr = randToUse
 }
 
 // Returns a random part of a slice
 func randomFrom(source []string) string {
-	return source[seedAndReturnRandom(len(source))]
+	return source[privateRand.Intn(len(source))]
 }
 
 // Title returns a random title, gender decides the gender of the name
 func Title(gender int) string {
-	var title = ""
 	switch gender {
 	case Male:
-		title = randomFrom(jsonData.MaleTitles)
-		break
+		return randomFrom(jsonData.MaleTitles)
 	case Female:
-		title = randomFrom(jsonData.FemaleTitles)
-		break
+		return randomFrom(jsonData.FemaleTitles)
 	default:
-		rand.Seed(time.Now().UnixNano())
-		title = FirstName(rand.Intn(2))
-		break
+		return Title(privateRand.Intn(2))
 	}
-	return title
 }
 
 // FirstName returns a random first name, gender decides the gender of the name
@@ -117,7 +131,6 @@ func FirstName(gender int) string {
 		name = randomFrom(jsonData.FirstNamesFemale)
 		break
 	default:
-		rand.Seed(time.Now().UnixNano())
 		name = FirstName(rand.Intn(2))
 		break
 	}
@@ -171,6 +184,18 @@ func City() string {
 	return randomFrom(jsonData.Cities)
 }
 
+// ProvinceForCountry returns a randomly selected province (state, county,subdivision ) name for a supplied country.
+// If the country is not supported it will return an empty string.
+func ProvinceForCountry(countrycode string) string {
+	switch countrycode {
+	case "US":
+		return randomFrom(jsonData.States)
+	case "GB":
+		return randomFrom(jsonData.ProvincesGB)
+	}
+	return ""
+}
+
 // State returns a random american state
 func State(typeOfState int) string {
 	if typeOfState == Small {
@@ -184,6 +209,18 @@ func Street() string {
 	return fmt.Sprintf("%s %s", randomFrom(jsonData.People), randomFrom(jsonData.StreetTypes))
 }
 
+// StreetForCountry returns a random fake street name typical to the supplied country.
+// If the country is not supported it will return an empty string.
+func StreetForCountry(countrycode string) string {
+	switch countrycode {
+	case "US":
+		return Street()
+	case "GB":
+		return fmt.Sprintf("%s %s", randomFrom(jsonData.StreetNameGB), randomFrom(jsonData.StreetTypesGB))
+	}
+	return ""
+}
+
 // Address returns an american style address
 func Address() string {
 	return fmt.Sprintf("%d %s,\n%s, %s, %s", Number(100), Street(), City(), State(Small), PostalCode("US"))
@@ -194,28 +231,26 @@ func Paragraph() string {
 	return randomFrom(jsonData.Paragraphs)
 }
 
-// Number returns a random number, if only one integer is supplied it is treated as the max value to return
-// if a second argument is supplied it returns a number between (and including) the two numbers
+// Number returns a random number, if only one integer (n1) is supplied it returns a number in [0,n1)
+// if a second argument is supplied it returns a number in [n1,n2)
 func Number(numberRange ...int) int {
 	nr := 0
-	rand.Seed(time.Now().UnixNano())
 	if len(numberRange) > 1 {
 		nr = 1
-		nr = seedAndReturnRandom(numberRange[1]-numberRange[0]) + numberRange[0]
+		nr = privateRand.Intn(numberRange[1]-numberRange[0]) + numberRange[0]
 	} else {
-		nr = seedAndReturnRandom(numberRange[0])
+		nr = privateRand.Intn(numberRange[0])
 	}
 	return nr
 }
 
 func Decimal(numberRange ...int) float64 {
 	nr := 0.0
-	rand.Seed(time.Now().UnixNano())
 	if len(numberRange) > 1 {
 		nr = 1.0
-		nr = seedAndReturnRandomFloat()*(float64(numberRange[1])-float64(numberRange[0])) + float64(numberRange[0])
+		nr = privateRand.Float64()*(float64(numberRange[1])-float64(numberRange[0])) + float64(numberRange[0])
 	} else {
-		nr = seedAndReturnRandomFloat() * float64(numberRange[0])
+		nr = privateRand.Float64() * float64(numberRange[0])
 	}
 
 	if len(numberRange) > 2 {
@@ -255,8 +290,19 @@ func StringSample(stringList ...string) string {
 	return str
 }
 
+// Alphanumeric returns a random alphanumeric string consits of [0-9a-zA-Z].
+func Alphanumeric(length int) string {
+	list := make([]byte, length)
+
+	for i := range list {
+		list[i] = ALPHANUMERIC[privateRand.Intn(len(ALPHANUMERIC))]
+	}
+
+	return string(list)
+}
+
 func Boolean() bool {
-	nr := seedAndReturnRandom(2)
+	nr := privateRand.Intn(2)
 	return nr != 0
 }
 
@@ -291,7 +337,7 @@ func SillyName() string {
 func IpV4Address() string {
 	blocks := []string{}
 	for i := 0; i < 4; i++ {
-		number := seedAndReturnRandom(255)
+		number := privateRand.Intn(255)
 		blocks = append(blocks, strconv.Itoa(number))
 	}
 
@@ -302,7 +348,7 @@ func IpV4Address() string {
 func IpV6Address() string {
 	var ip net.IP
 	for i := 0; i < net.IPv6len; i++ {
-		number := uint8(seedAndReturnRandom(255))
+		number := uint8(privateRand.Intn(255))
 		ip = append(ip, number)
 	}
 	return ip.String()
@@ -312,7 +358,7 @@ func IpV6Address() string {
 func MacAddress() string {
 	blocks := []string{}
 	for i := 0; i < 6; i++ {
-		number := fmt.Sprintf("%02x", seedAndReturnRandom(255))
+		number := fmt.Sprintf("%02x", privateRand.Intn(255))
 		blocks = append(blocks, number)
 	}
 
@@ -332,11 +378,12 @@ func Month() string {
 // FullDate returns full date
 func FullDate() string {
 	timestamp := time.Now()
-	day := Day()
-	month := Month()
 	year := timestamp.Year()
-	fullDate := day + " " + strconv.Itoa(Number(1, 30)) + " " + month[0:3] + " " + strconv.Itoa(year)
-	return fullDate
+	month := Number(1, 13)
+	maxDay := time.Date(year, time.Month(month+1), 0, 0, 0, 0, 0, time.UTC).Day()
+	day := Number(1, maxDay+1)
+	date := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+	return date.Format(DateOutputLayout)
 }
 
 // FullDateInRange returns a date string within a given range, given in the format "2006-01-02".
@@ -372,6 +419,10 @@ func Timezone() string {
 	return randomFrom(jsonData.Timezones)
 }
 
+func Locale() string {
+	return randomFrom(jsonData.Locales)
+}
+
 func UserAgentString() string {
 	return randomFrom(jsonData.UserAgents)
 }
@@ -379,7 +430,7 @@ func UserAgentString() string {
 func PhoneNumber() string {
 	str := randomFrom(jsonData.CountryCallingCodes) + " "
 
-	str += Digits(rand.Intn(3) + 1)
+	str += Digits(privateRand.Intn(3) + 1)
 
 	for {
 		// max 15 chars
@@ -387,6 +438,6 @@ func PhoneNumber() string {
 		if remaining < 2 {
 			return "+" + str
 		}
-		str += " " + Digits(rand.Intn(remaining-1)+1)
+		str += " " + Digits(privateRand.Intn(remaining-1)+1)
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/cloudfoundry/bbl-state-resource/outrunner"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

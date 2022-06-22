@@ -11,6 +11,7 @@ randomdata is a tiny help suite for generating random data such as
 * last names
 * full names (male or female)
 * country names (full name or iso 3166.1 alpha-2 or alpha-3)
+* locales / language tags (bcp-47)
 * random email address
 * city names
 * American state names (two chars or full)
@@ -84,6 +85,9 @@ func main() {
 
     // Print a country using ISO 3166-1 alpha-3
     fmt.Println(randomdata.Country(randomdata.ThreeCharCountry))
+    
+    // Print BCP 47 language tag
+    fmt.Println(randomdata.Locale())
 
     // Print a currency using ISO 4217
     fmt.Println(randomdata.Currency())
@@ -103,19 +107,19 @@ func main() {
     // Print an american sounding address
     fmt.Println(randomdata.Address())
 
-    // Print a random number >= 10 and <= 20
+    // Print a random number >= 10 and < 20
     fmt.Println(randomdata.Number(10, 20))
 
-    // Print a number >= 0 and <= 20
+    // Print a number >= 0 and < 20
     fmt.Println(randomdata.Number(20))
 
-    // Print a random float >= 0 and <= 20 with decimal point 3
+    // Print a random float >= 0 and < 20 with decimal point 3
     fmt.Println(randomdata.Decimal(0, 20, 3))
 
-    // Print a random float >= 10 and <= 20
+    // Print a random float >= 10 and < 20
     fmt.Println(randomdata.Decimal(10, 20))
 
-    // Print a random float >= 0 and <= 20
+    // Print a random float >= 0 and < 20
     fmt.Println(randomdata.Decimal(20))
 
     // Print a bool
@@ -167,9 +171,26 @@ func main() {
     // There are many fields in the profile to use check the Profile struct definition in fullprofile.go
     profile := randomdata.GenerateProfile(randomdata.Male | randomdata.Female | randomdata.RandomGender)
     fmt.Printf("The new profile's username is: %s and password (md5): %s\n", profile.Login.Username, profile.Login.Md5)
+
+    // Get a random country-localised street name for Great Britain
+    fmt.Println(randomdata.StreetForCountry("GB"))
+    // Get a random country-localised street name for USA
+    fmt.Println(randomdata.StreetForCountry("US"))
+
+    // Get a random country-localised province for Great Britain
+    fmt.Println(randomdata.ProvinceForCountry("GB"))
+    // Get a random country-localised province for USA
+    fmt.Println(randomdata.ProvinceForCountry("US"))
 }
 
 ```
+
+## Versioning / Release Strategy
+Go-Randomdata follows [Semver](https://www.semver.org)
+
+You can find current releases tagged under the [releases section](https://github.com/Pallinder/go-randomdata/releases).
+
+The [CHANGELOG.md](CHANGELOG.md) file contains the changelog of the project.
 
 ## Contributors
 
