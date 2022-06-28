@@ -69,10 +69,15 @@ var _ = Describe("Storage", func() {
 			nestedDirectory = filepath.Join(storageDir, "nested-dir")
 			err = os.MkdirAll(nestedDirectory, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			nestedFile := filepath.Join(nestedDirectory, "nested-data.json")
-			f, err := os.Create(nestedFile)
+
+			nestedFilename := filepath.Join(nestedDirectory, "nested-data.json")
+			nestedDataFile, err := os.Create(nestedFilename)
 			Expect(err).NotTo(HaveOccurred())
-			defer f.Close()
+			defer nestedDataFile.Close()
+
+			nestedDataContents := fmt.Sprintf(`{"version": 999, "randomDir": "%s"}`, nestedDirectory)
+			_, err = nestedDataFile.Write([]byte(nestedDataContents))
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		store = storage.Storage{
@@ -93,15 +98,16 @@ var _ = Describe("Storage", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(version.Ref).To(Equal("fresh-version"))
 
-			Expect(fakeTarrer.WriteCall.Receives.Output).To(Equal(fakeWriteCloser))
-			Expect(fakeTarrer.WriteCall.Receives.Sources).To(ConsistOf(filename, nestedDirectory))
+			Expect(fakeTarrer.ArchiveCall.Receives.Output).To(Equal(fakeWriteCloser))
+			Expect(fakeTarrer.ArchiveCall.Receives.Files[1].NameInArchive).To(Equal(filepath.Base(filename)))
+			Expect(fakeTarrer.ArchiveCall.Receives.Files[2].NameInArchive).To(Equal(filepath.Base(nestedDirectory)))
 
 			Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(1))
 		})
 
 		Context("when archiving the file returns an error", func() {
 			BeforeEach(func() {
-				fakeTarrer.WriteCall.Returns.Error = errors.New("coconut")
+				fakeTarrer.ArchiveCall.Returns.Error = errors.New("coconut")
 			})
 
 			It("returns an error", func() {
@@ -131,8 +137,7 @@ var _ = Describe("Storage", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(version.Ref).To(Equal("fresh-version"))
 
-				Expect(fakeTarrer.ReadCall.Receives.Input).To(Equal(fakeReadCloser))
-				Expect(fakeTarrer.ReadCall.Receives.Destination).To(Equal(storageDir))
+				Expect(fakeTarrer.ExtractCall.Receives.SourceArchive).To(Equal(fakeReadCloser))
 
 				Expect(fakeReadCloser.CloseCall.CallCount).To(Equal(1))
 				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(0))
@@ -149,10 +154,11 @@ var _ = Describe("Storage", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(version.Ref).To(Equal("fresh-version"))
 
-				Expect(fakeTarrer.ReadCall.CallCount).To(Equal(0))
+				Expect(fakeTarrer.ExtractCall.CallCount).To(Equal(0))
 
-				Expect(fakeTarrer.WriteCall.Receives.Output).To(Equal(fakeWriteCloser))
-				Expect(fakeTarrer.WriteCall.Receives.Sources).To(ConsistOf(filename, nestedDirectory))
+				Expect(fakeTarrer.ArchiveCall.Receives.Output).To(Equal(fakeWriteCloser))
+				Expect(fakeTarrer.ArchiveCall.Receives.Files[1].Name()).To(Equal(filepath.Base(filename)))
+				Expect(fakeTarrer.ArchiveCall.Receives.Files[2].Name()).To(Equal(filepath.Base(nestedDirectory)))
 
 				Expect(fakeReadCloser.CloseCall.CallCount).To(Equal(0))
 				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(1))
@@ -168,8 +174,8 @@ var _ = Describe("Storage", func() {
 				_, err := store.Download(storageDir)
 				Expect(err).To(MatchError("papaya"))
 
-				Expect(fakeTarrer.ReadCall.CallCount).To(Equal(0))
-				Expect(fakeTarrer.WriteCall.CallCount).To(Equal(0))
+				Expect(fakeTarrer.ExtractCall.CallCount).To(Equal(0))
+				Expect(fakeTarrer.ArchiveCall.CallCount).To(Equal(0))
 
 				Expect(fakeReadCloser.CloseCall.CallCount).To(Equal(0))
 				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(0))
@@ -178,14 +184,14 @@ var _ = Describe("Storage", func() {
 
 		Context("when reading the archive returns an error", func() {
 			BeforeEach(func() {
-				fakeTarrer.ReadCall.Returns.Error = errors.New("mango")
+				fakeTarrer.ExtractCall.Returns.Error = errors.New("mango")
 			})
 
 			It("returns the error", func() {
 				_, err := store.Download(storageDir)
 				Expect(err).To(MatchError("mango"))
 
-				Expect(fakeTarrer.WriteCall.CallCount).To(Equal(0))
+				Expect(fakeTarrer.ArchiveCall.CallCount).To(Equal(0))
 
 				Expect(fakeReadCloser.CloseCall.CallCount).To(Equal(1))
 				Expect(fakeWriteCloser.CloseCall.CallCount).To(Equal(0))
