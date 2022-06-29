@@ -1,4 +1,4 @@
-FROM cloudfoundry/cf-deployment-concourse-task
+FROM cloudfoundry/cf-deployment-concourse-tasks
 WORKDIR /go/src/github.com/cloudfoundry/bbl-state-resource/
 COPY . .
 
