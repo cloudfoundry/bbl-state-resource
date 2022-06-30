@@ -8,7 +8,7 @@ import (
 	"io"
 
 	gcs "cloud.google.com/go/storage"
-	"github.com/mholt/archiver"
+	"github.com/mholt/archiver/v4"
 	oauthgoogle "golang.org/x/oauth2/google"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -125,6 +125,9 @@ func NewGCSStorage(serviceAccountKey, objectName, bucketName string) (Storage, e
 		Object: objectHandleWrapper{
 			objectHandle: object,
 		},
-		Archiver: archiver.TarGz,
+		Archiver: archiver.CompressedArchive{
+			Compression: archiver.Gz{},
+			Archival:    archiver.Tar{},
+		},
 	}, nil
 }

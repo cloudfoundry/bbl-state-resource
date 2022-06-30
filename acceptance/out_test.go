@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
@@ -29,7 +29,7 @@ var _ = Describe("out", func() {
 		)
 
 		BeforeEach(func() {
-			name = fmt.Sprintf("bsr-test-out-%d-%s", GinkgoParallelNode(), projectId)
+			name = fmt.Sprintf("bsr-test-out-%d-%s", GinkgoParallelProcess(), projectId)
 			upRequest := fmt.Sprintf(`{
 				"source": {
 					"bucket": "bsr-acc-tests-%s",
@@ -113,7 +113,7 @@ var _ = Describe("out", func() {
 		)
 
 		BeforeEach(func() {
-			name = fmt.Sprintf("bsr-test-out-plan-%d-%s", GinkgoParallelNode(), projectId)
+			name = fmt.Sprintf("bsr-test-out-plan-%d-%s", GinkgoParallelProcess(), projectId)
 			upRequest := fmt.Sprintf(`{
 				"source": {
 					"bucket": "bsr-acc-tests-%s",
@@ -198,7 +198,7 @@ var _ = Describe("out", func() {
 			err = os.MkdirAll(filepath.Join(stateDir, "terraform"), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			name = fmt.Sprintf("bsr-test-bad-out-%d-%s", GinkgoParallelNode(), projectId)
+			name = fmt.Sprintf("bsr-test-bad-out-%d-%s", GinkgoParallelProcess(), projectId)
 			badRequest := fmt.Sprintf(`{
 				"source": {
 					"bucket": "bsr-acc-tests-%s",

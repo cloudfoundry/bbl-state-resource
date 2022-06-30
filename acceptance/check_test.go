@@ -13,7 +13,7 @@ import (
 
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
 	"github.com/cloudfoundry/bbl-state-resource/storage"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
@@ -30,7 +30,7 @@ var _ = Describe("check", func() {
 		)
 
 		buildStorageClient := func(envName string) storage.StorageClient {
-			bucketName := fmt.Sprintf("bsr-check-test-%d-%s", GinkgoParallelNode(), projectId)
+			bucketName := fmt.Sprintf("bsr-check-test-%d-%s", GinkgoParallelProcess(), projectId)
 			source := concourse.Source{
 				Bucket:               bucketName,
 				IAAS:                 "gcp",

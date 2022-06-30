@@ -1,24 +1,30 @@
 package fakes
 
-import "io"
+import (
+	"context"
+	"io"
+
+	"github.com/mholt/archiver/v4"
+)
 
 type Tarrer struct {
-	ReadCall struct {
+	ArchiveCall struct {
 		CallCount int
 		Receives  struct {
-			Input       io.Reader
-			Destination string
+			Output io.Writer
+			Files  []archiver.File
 		}
 		Returns struct {
 			Error error
 		}
 	}
 
-	WriteCall struct {
+	ExtractCall struct {
 		CallCount int
 		Receives  struct {
-			Output  io.Writer
-			Sources []string
+			SourceArchive  io.Reader
+			PathsInArchive []string
+			HandleFile     archiver.FileHandler
 		}
 		Returns struct {
 			Error error
@@ -26,16 +32,17 @@ type Tarrer struct {
 	}
 }
 
-func (t *Tarrer) Write(output io.Writer, sources []string) error {
-	t.WriteCall.CallCount++
-	t.WriteCall.Receives.Output = output
-	t.WriteCall.Receives.Sources = sources
-	return t.WriteCall.Returns.Error
+func (t *Tarrer) Archive(ctx context.Context, output io.Writer, files []archiver.File) error {
+	t.ArchiveCall.CallCount++
+	t.ArchiveCall.Receives.Output = output
+	t.ArchiveCall.Receives.Files = files
+	return t.ArchiveCall.Returns.Error
 }
 
-func (t *Tarrer) Read(input io.Reader, destination string) error {
-	t.ReadCall.CallCount++
-	t.ReadCall.Receives.Input = input
-	t.ReadCall.Receives.Destination = destination
-	return t.ReadCall.Returns.Error
+func (t *Tarrer) Extract(ctx context.Context, sourceArchive io.Reader, pathsInArchive []string, handleFile archiver.FileHandler) error {
+	t.ExtractCall.CallCount++
+	t.ExtractCall.Receives.SourceArchive = sourceArchive
+	t.ExtractCall.Receives.PathsInArchive = pathsInArchive
+	t.ExtractCall.Receives.HandleFile = handleFile
+	return t.ExtractCall.Returns.Error
 }
