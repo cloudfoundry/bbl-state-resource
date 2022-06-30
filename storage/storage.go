@@ -85,24 +85,6 @@ func (s Storage) Download(targetDir string) (Version, error) {
 	}
 
 	handler := func(ctx context.Context, f archiver.File) error {
-		// p := filepath.Join(targetDir, path.Dir(f.NameInArchive))
-		// err = os.MkdirAll(p, os.ModePerm)
-		// if err != nil {
-		// 	return err
-		// }
-		// src, err := f.Open()
-		// if err != nil {
-		// 	return err
-		// }
-		// defer src.Close()
-		// dst, err := os.Create(filepath.Join(p, path.Base(f.NameInArchive)))
-		// if err != nil {
-		// 	return err
-		// }
-		// defer dst.Close()
-		// if _, err = io.Copy(dst, src); err != nil {
-		// 	return err
-		// }
 		hdr, ok := f.Header.(*tar.Header)
 
 		if !ok {
