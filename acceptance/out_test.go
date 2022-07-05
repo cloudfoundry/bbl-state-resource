@@ -104,6 +104,7 @@ var _ = Describe("out", func() {
 
 	Context("with a plan patch", func() {
 		var (
+			tmpdir       string
 			name         string
 			upSourcesDir string
 			upOutInput   *bytes.Buffer
@@ -113,6 +114,10 @@ var _ = Describe("out", func() {
 		)
 
 		BeforeEach(func() {
+			var err error
+			tmpdir, err = ioutil.TempDir(os.TempDir(), "")
+			Expect(err).NotTo(HaveOccurred())
+
 			name = fmt.Sprintf("bsr-test-out-plan-%d-%s", GinkgoParallelProcess(), projectId)
 			upRequest := fmt.Sprintf(`{
 				"source": {
@@ -125,15 +130,20 @@ var _ = Describe("out", func() {
 					"name": "%s",
 					"command": "up",
 					"plan-patches": [
-						"plan-patch-fixture"
+						"plan-patches"
 					]
 				}
 			}`, projectId, strconv.Quote(serviceAccountKey), name)
 
-			var err error
-			upSourcesDir, err = ioutil.TempDir("", "up_out_test")
+			upSourcesDir, err = ioutil.TempDir(tmpdir, "up_out_test")
 			Expect(err).NotTo(HaveOccurred())
 			upOutInput = bytes.NewBuffer([]byte(upRequest))
+
+			planPatchFixturePath, err := filepath.Abs("plan-patch-fixture")
+			Expect(err).NotTo(HaveOccurred())
+
+			err = os.Symlink(planPatchFixturePath, filepath.Join(upSourcesDir, "plan-patches"))
+			Expect(err).NotTo(HaveOccurred())
 
 			downRequest := fmt.Sprintf(`{
 				"source": {
@@ -148,7 +158,7 @@ var _ = Describe("out", func() {
 				}
 			}`, projectId, strconv.Quote(serviceAccountKey), name)
 
-			downSourcesDir, err = ioutil.TempDir("", "down_out_test")
+			downSourcesDir, err = ioutil.TempDir(tmpdir, "down_out_test")
 			Expect(err).NotTo(HaveOccurred())
 			downOutInput = bytes.NewBuffer([]byte(downRequest))
 		})
@@ -167,6 +177,8 @@ var _ = Describe("out", func() {
 				_, err = ioutil.ReadFile(filepath.Join(downSourcesDir, "bbl-state", "metadata"))
 				Expect(err).To(HaveOccurred())
 			})
+
+			Expect(os.RemoveAll(tmpdir)).To(Succeed())
 		})
 
 		It("bbls up and down successfully using the plan patch", func() {
@@ -179,6 +191,58 @@ var _ = Describe("out", func() {
 				// Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf(`{"version":{"name":"%s","ref":".+","updated":".+"}}`, name)))
 				Eventually(session.Err).Should(gbytes.Say("plan patch has been successfully applied!"))
 			})
+		})
+	})
+
+	Context("with an invalid plan patch", func() {
+		var (
+			name         string
+			upSourcesDir string
+			upOutInput   *bytes.Buffer
+			tmpdir       string
+		)
+
+		BeforeEach(func() {
+			var err error
+			tmpdir, err = ioutil.TempDir(os.TempDir(), "")
+			Expect(err).NotTo(HaveOccurred())
+
+			name = fmt.Sprintf("bsr-test-out-plan-%d-%s", GinkgoParallelNode(), projectId)
+			upRequest := fmt.Sprintf(`{
+				"source": {
+					"bucket": "bsr-acc-tests-%s",
+					"iaas": "gcp",
+					"gcp_region": "us-east1",
+					"gcp_service_account_key": %s
+				},
+				"params": {
+					"name": "%s",
+					"command": "up",
+					"plan-patches": [
+						"no-such/plan-patch-fixture"
+					]
+				}
+			}`, projectId, strconv.Quote(serviceAccountKey), name)
+
+			upSourcesDir, err = ioutil.TempDir(tmpdir, "up_out_test")
+			Expect(err).NotTo(HaveOccurred())
+			upOutInput = bytes.NewBuffer([]byte(upRequest))
+		})
+
+		AfterEach(func() {
+			Expect(os.RemoveAll(tmpdir)).To(Succeed())
+		})
+
+		It("fails", func() {
+			cmd := exec.Command(outBinaryPath, upSourcesDir)
+			cmd.Dir = tmpdir
+			cmd.Stdin = upOutInput
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session, 40*time.Minute).Should(gexec.Exit(), "bbl up should've exited!")
+			Expect(session.ExitCode()).NotTo(Equal(0))
+			Expect(session.Err).To(gbytes.Say("failed to apply plan-patches to bbl state: stat no-such/plan-patch-fixture: no such file or directory"))
 		})
 	})
 
