@@ -11,7 +11,7 @@ import (
 
 	"github.com/cloudfoundry/bbl-state-resource/concourse"
 	"github.com/cloudfoundry/bbl-state-resource/storage"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
@@ -42,7 +42,7 @@ var _ = Describe("in", func() {
 		// this client isn't well tested, so we're going
 		// to violate some abstraction layers to test it here
 		// against the real api
-		name = fmt.Sprintf("bsr-test-in-%d-%s", GinkgoParallelNode(), projectId)
+		name = fmt.Sprintf("bsr-test-in-%d-%s", GinkgoParallelProcess(), projectId)
 		client, err := storage.NewStorageClient(serviceAccountKey, name, bucket)
 		Expect(err).NotTo(HaveOccurred())
 
